@@ -1,5 +1,5 @@
 {
-  "name": "my-turborepo",
+  "name": "x-clone-project",
   "private": true,
   "scripts": {
     "build": "turbo run build",
