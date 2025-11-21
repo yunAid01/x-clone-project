@@ -1,0 +1,29 @@
+// DB 접속 설정
+
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// 클라이언트 생성기 설정
+generator client {
+  provider = "prisma-client-js"
+}
+
+// 1. 유저 모델 (Auth 서비스용)
+model User {
+  id        String   @id @default(uuid()) // 고유 ID (UUID)
+  email     String   @unique              // 이메일 (중복 불가)
+  password  String                        // 비밀번호 (암호화 저장 예정)
+  name      String?                       // 닉네임 (선택)
+  role      Role     @default(USER)       // 권한
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// 권한 관리 (Enum)
+enum Role {
+  USER
+  ADMIN
+}
