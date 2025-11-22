@@ -1,32 +1,31 @@
-import { NestFactory } from "@nestjs/core";
-import { AppModule } from "./app.module";
-import { MicroserviceOptions, Transport } from "@nestjs/microservices";
-import { ConfigService } from "@nestjs/config";
-import { config } from "process";
+import { NestFactory } from '@nestjs/core';
+import { TwitModule } from './twit.module';
+import { MicroserviceOptions, Transport } from '@nestjs/microservices';
+import { ConfigService } from '@nestjs/config';
 
 async function bootstrap() {
-  const appContext = await NestFactory.createApplicationContext(AppModule);
+  const appContext = await NestFactory.createApplicationContext(TwitModule);
   const configService = appContext.get(ConfigService);
-  const RMQ_URL = configService.get<string>("RABBITMQ_URL");
+  const RMQ_URL = configService.get<string>('RABBITMQ_URL');
 
   // Tweet 서비스 생성
   const app = await NestFactory.createMicroservice<MicroserviceOptions>(
-    AppModule,
+    TwitModule,
     {
       transport: Transport.RMQ,
       options: {
         urls: [`${RMQ_URL}`],
-        queue: "tweet_queue", // 👈 여기 이름이 tweet_queue 입니다!
+        queue: 'tweet_queue',
         queueOptions: {
           durable: false,
         },
         socketOptions: {
           clientProperties: {
-            connection_name: "Tweet Service (Worker)", // 관리자 페이지에 뜰 이름
+            connection_name: 'Tweet Service (Worker)', // 관리자 페이지에 뜰 이름
           },
         },
       },
-    }
+    },
   );
 
   await app.listen();
