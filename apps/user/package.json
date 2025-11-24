@@ -21,6 +21,7 @@
     "test:e2e": "jest --config ./test/jest-e2e.json"
   },
   "dependencies": {
+    "@repo/validation": "workspace:*",
     "@nestjs/config": "^4.0.2",
     "@nestjs/common": "^11.0.1",
     "@nestjs/microservices": "^11.1.9",
