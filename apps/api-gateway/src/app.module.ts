@@ -1,25 +1,25 @@
-import { Module } from "@nestjs/common";
-import { ClientsModule, Transport } from "@nestjs/microservices"; // ★ 통신을 위한 모듈
-import { ConfigModule, ConfigService } from "@nestjs/config"; // ★ 환경변수 모듈
-import { AppController } from "./app.controller";
-import { AppService } from "./app.service";
+import { Module } from '@nestjs/common';
+import { ClientsModule, Transport } from '@nestjs/microservices'; // ★ 통신을 위한 모듈
+import { ConfigModule, ConfigService } from '@nestjs/config'; // ★ 환경변수 모듈
+import { AppController } from './app.controller';
+import { AppService } from './app.service';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: [".env", "../../.env"],
+      envFilePath: ['.env', '../../.env'],
     }),
     ClientsModule.registerAsync([
       {
-        name: "AUTH_SERVICE",
+        name: 'AUTH_SERVICE',
         imports: [ConfigModule],
         inject: [ConfigService],
         useFactory: (configService: ConfigService) => ({
           transport: Transport.RMQ,
           options: {
-            urls: [`${configService.get<string>("RABBITMQ_URL")}`],
-            queue: "auth_queue",
+            urls: [`${configService.get<string>('RABBITMQ_URL')}`],
+            queue: 'auth_queue',
             queueOptions: {
               durable: false,
             },
@@ -27,14 +27,14 @@ import { AppService } from "./app.service";
         }),
       },
       {
-        name: "TWIT_SERVICE",
+        name: 'USER_SERVICE',
         imports: [ConfigModule],
         inject: [ConfigService],
         useFactory: (configService: ConfigService) => ({
           transport: Transport.RMQ,
           options: {
-            urls: [`${configService.get<string>("RABBITMQ_URL")}`],
-            queue: "tweet_queue",
+            urls: [`${configService.get<string>('RABBITMQ_URL')}`],
+            queue: 'user_queue',
             queueOptions: {
               durable: false,
             },
@@ -42,14 +42,29 @@ import { AppService } from "./app.service";
         }),
       },
       {
-        name: "NOTIFICATION_SERVICE",
+        name: 'TWIT_SERVICE',
         imports: [ConfigModule],
         inject: [ConfigService],
         useFactory: (configService: ConfigService) => ({
           transport: Transport.RMQ,
           options: {
-            urls: [`${configService.get<string>("RABBITMQ_URL")}`],
-            queue: "notification_queue",
+            urls: [`${configService.get<string>('RABBITMQ_URL')}`],
+            queue: 'tweet_queue',
+            queueOptions: {
+              durable: false,
+            },
+          },
+        }),
+      },
+      {
+        name: 'NOTIFICATION_SERVICE',
+        imports: [ConfigModule],
+        inject: [ConfigService],
+        useFactory: (configService: ConfigService) => ({
+          transport: Transport.RMQ,
+          options: {
+            urls: [`${configService.get<string>('RABBITMQ_URL')}`],
+            queue: 'notification_queue',
             queueOptions: {
               durable: false,
             },

@@ -1,11 +1,19 @@
-import { Injectable } from '@nestjs/common';
-import { PrismaService } from '@repo/database'; // 우리가 만든 DB 도구
-import * as bcrypt from 'bcrypt'; // 암호화 도구
+import {
+  BadRequestException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
+import { PrismaService } from './prisma/prisma.service';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class AuthService {
   // PrismaService(DB)를 주방보조로 채용합니다.
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly jwtService: JwtService,
+  ) {}
 
   // 회원가입 요리 시작!
   async userRegister(data: any) {
@@ -17,7 +25,7 @@ export class AuthService {
     });
 
     if (existingUser) {
-      return { status: 400, message: '이미 존재하는 이메일입니다.' };
+      throw new BadRequestException('Email already in use');
     }
 
     // 2. 비밀번호 암호화 (해싱)
@@ -34,8 +42,35 @@ export class AuthService {
       },
     });
 
-    // 4. 비밀번호 뺀 정보만 반환 (보안)
-    const { password: _, ...result } = newUser;
-    return { status: 201, message: '회원가입 성공!', user: result };
+    return { status: 201, message: 'successfully registered' };
+  }
+
+  async userLogin(data) {
+    const { email, password } = data;
+
+    // 1. 이메일로 사용자 찾기
+    const user = await this.prisma.user.findUnique({
+      where: { email },
+    });
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+    // 2. 비밀번호 비교
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+    const token = this.jwtService.sign({ userId: user.id, email: user.email });
+    // 3. 로그인 성공!
+    return {
+      status: 200,
+      token: token,
+      message: 'successfully logged in',
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+      },
+    };
   }
 }

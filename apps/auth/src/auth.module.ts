@@ -1,20 +1,22 @@
 import { Module } from '@nestjs/common';
-import { AppController } from './auth.controller';
+import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { ConfigModule } from '@nestjs/config';
-// import { PrismaModule } from '@repo/database';
-// Replace the above line with the correct import based on what '@repo/database' exports.
-// For example, if it exports 'DatabaseModule', use:
-import { DatabaseModule } from '@repo/database';
+import { PrismaModule } from './prisma/prisma.module';
+import { JwtModule } from '@nestjs/jwt';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       envFilePath: ['.env', '../../.env'],
     }),
-    DatabaseModule,
+    JwtModule.register({
+      secret: process.env.JWT_SECRET_KEY || 'default-secret-key',
+      signOptions: { expiresIn: '1d' },
+    }),
+    PrismaModule,
   ],
-  controllers: [AppController],
+  controllers: [AuthController],
   providers: [AuthService],
 })
 export class AuthModule {}

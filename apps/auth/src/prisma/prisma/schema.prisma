@@ -19,7 +19,6 @@ model User {
   name      String?                       // 닉네임 (선택)
   role      Role     @default(USER)       // 권한
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
 }
 
 // 권한 관리 (Enum)

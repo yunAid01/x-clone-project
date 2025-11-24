@@ -8,6 +8,7 @@ npm-debug.log*
 yarn-debug.log*
 pnpm-debug.log*
 .npm/
+./init-db.sql
 
 # 2. Package manager caches
 .yarn/

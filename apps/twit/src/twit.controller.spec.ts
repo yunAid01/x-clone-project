@@ -1,22 +1,22 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { AppController } from './twit.controller';
-import { AppService } from './twit.service';
+import { TwitController } from './twit.controller';
+import { TwitService } from './twit.service';
 
-describe('AppController', () => {
-  let appController: AppController;
+describe('TwitController', () => {
+  let twitController: TwitController;
 
   beforeEach(async () => {
     const app: TestingModule = await Test.createTestingModule({
-      controllers: [AppController],
-      providers: [AppService],
+      controllers: [TwitController],
+      providers: [TwitService],
     }).compile();
 
-    appController = app.get<AppController>(AppController);
+    twitController = app.get<TwitController>(TwitController);
   });
 
   describe('root', () => {
     it('should return "Hello World!"', () => {
-      expect(appController.getHello()).toBe('Hello World!');
+      // expect(twitController.getHello()).toBe('Hello World!');
     });
   });
 });

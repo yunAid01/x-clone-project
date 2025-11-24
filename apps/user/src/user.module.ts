@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
-import { TwitController } from './twit.controller';
-import { TwitService } from './twit.service';
+import { UserController } from './user.controller';
+import { UserService } from './user.service';
 import { ConfigModule } from '@nestjs/config';
 
 @Module({
@@ -10,7 +10,7 @@ import { ConfigModule } from '@nestjs/config';
       envFilePath: ['.env', '../../.env'],
     }),
   ],
-  controllers: [TwitController],
-  providers: [TwitService],
+  controllers: [UserController],
+  providers: [UserService],
 })
-export class TwitModule {}
+export class UserModule {}
