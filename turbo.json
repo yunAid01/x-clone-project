@@ -15,8 +15,19 @@
     },
     "dev": {
       "dependsOn": ["^build"],
+      "env": [
+        "NODE_ENV",
+        "JWT_SECRET_KEY",
+        "DATABASE_AUTH_URL",
+        "DATABASE_TWIT_URL",
+        "DATABASE_USER_URL"
+      ],
       "cache": false,
       "persistent": true
+    },
+    "test": {
+      "dependsOn": ["^test"],
+      "cache": false
     }
   }
 }

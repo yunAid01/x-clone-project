@@ -1,0 +1,75 @@
+# Git 관련
+.git
+.gitignore
+.github
+
+# 의존성 폴더 (도커 안에서 새로 설치할 거니까 가져가지 마!)
+node_modules
+**/node_modules
+.pnpm-store
+
+# 빌드 결과물 (도커 안에서 새로 빌드할 거니까 가져가지 마!)
+dist
+.next
+build
+out
+*.tsbuildinfo
+
+# 캐시 및 로그
+.turbo
+.npm
+*.log
+logs
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# 로컬 환경설정 (도커는 .env만 보거나 환경변수 주입받음)
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.*.local
+
+# OS 파일
+.DS_Store
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN
+
+# IDE 및 에디터
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# 테스트 및 커버리지
+coverage
+.nyc_output
+test-results
+playwright-report
+jest-stare
+
+# 문서 및 기타
+README.md
+docs
+*.md
+CHANGELOG*
+
+# 임시 파일
+*.tmp
+*.temp
+.cache
+.parcel-cache
+
+# Docker 관련
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+
+# CI/CD
+.github
+.gitlab-ci.yml
+.circleci

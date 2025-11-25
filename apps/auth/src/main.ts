@@ -8,7 +8,7 @@ async function bootstrap() {
   // createApplicationContext는 서버를 띄우진 않고 Nest 기능만 로드합니다.
   const appContext = await NestFactory.createApplicationContext(AuthModule);
   const configService = appContext.get(ConfigService);
-  const RMQ_URL = configService.get<string>('RABBITMQ_URL');
+  const RMQ_URL = configService.get('RABBITMQ_URL');
 
   const app = await NestFactory.createMicroservice<MicroserviceOptions>(
     AuthModule,

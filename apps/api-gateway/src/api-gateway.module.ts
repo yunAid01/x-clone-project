@@ -1,14 +1,26 @@
 import { Module } from '@nestjs/common';
-import { ClientsModule, Transport } from '@nestjs/microservices'; // ★ 통신을 위한 모듈
-import { ConfigModule, ConfigService } from '@nestjs/config'; // ★ 환경변수 모듈
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
+import { ClientsModule, Transport } from '@nestjs/microservices';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { AuthController } from './auth/auth.controller';
 
+// validation zod pipe
+import { ZodSerializerInterceptor, ZodValidationPipe } from 'nestjs-zod';
+import { APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: ['.env', '../../.env'],
+      envFilePath: (() => {
+        const env = process.env.NODE_ENV;
+        switch (env) {
+          case 'local':
+            return ['../../.env'];
+          case 'test':
+            return ['../../.env.test'];
+          default:
+            return ['../../.env'];
+        }
+      })(),
     }),
     ClientsModule.registerAsync([
       {
@@ -49,7 +61,7 @@ import { AppService } from './app.service';
           transport: Transport.RMQ,
           options: {
             urls: [`${configService.get<string>('RABBITMQ_URL')}`],
-            queue: 'tweet_queue',
+            queue: 'twit_queue',
             queueOptions: {
               durable: false,
             },
@@ -73,7 +85,16 @@ import { AppService } from './app.service';
       },
     ]),
   ],
-  controllers: [AppController],
-  providers: [AppService],
+  controllers: [AuthController],
+  providers: [
+    {
+      provide: APP_PIPE,
+      useClass: ZodValidationPipe,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: ZodSerializerInterceptor,
+    },
+  ],
 })
-export class AppModule {}
+export class ApiGateWayModule {}

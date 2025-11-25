@@ -9,6 +9,7 @@ yarn-debug.log*
 pnpm-debug.log*
 .npm/
 ./init-db.sql
+./init-test-db.sql
 
 # 2. Package manager caches
 .yarn/
@@ -23,6 +24,7 @@ pnpm-debug.log*
 .env.development.local
 .env.test.local
 .env.production.local
+.env.test
 
 # 단, 예제 파일(.env.example)은 git에 올려서 팀원들과 공유
 !.env.example

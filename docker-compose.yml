@@ -1,5 +1,4 @@
 services:
-  # 1. 메인 데이터베이스 (PostgreSQL)
   postgres:
     image: postgres:15-alpine
     container_name: twitter_postgres
@@ -13,7 +12,7 @@ services:
       - postgres_data:/var/lib/postgresql/data
       - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
 
-  # 2. 빠른 저장소 (Redis)
+  # 빠른 저장소 (Redis)
   redis:
     image: redis:alpine
     container_name: twitter_redis
@@ -21,7 +20,7 @@ services:
       - '${REDIS_PORT}:6379'
     command: redis-server --save 20 1 --loglevel warning
 
-  # 3. 메시지 큐 (RabbitMQ)
+  # 메시지 큐 (RabbitMQ)
   rabbitmq:
     image: rabbitmq:3-management-alpine
     container_name: twitter_rabbitmq
@@ -35,6 +34,7 @@ services:
   # (선택사항) DB를 쉽게 눈으로 보는 도구 (Adminer)
   adminer:
     image: adminer
+    container_name: twitter_adminer
     restart: always
     ports:
       - '${ADMINER_PORT}:8080'

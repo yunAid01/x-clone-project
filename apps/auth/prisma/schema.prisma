@@ -3,7 +3,7 @@
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  url      = env("DATABASE_AUTH_URL")
 }
 
 // 클라이언트 생성기 설정
