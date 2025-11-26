@@ -7,7 +7,7 @@ const mockUserService = {
   getUserProfile: jest.fn(),
 };
 
-describe('UserMicroServiceController', () => {
+describe('User-MicroServiceController', () => {
   let controller: UserController;
   let service: UserService;
 

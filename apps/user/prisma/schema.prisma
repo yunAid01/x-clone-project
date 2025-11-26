@@ -13,7 +13,8 @@ generator client {
 model UserProfile {
   id        String   @id @default(uuid())
   userId    String   @unique // Auth 서비스의 User ID와 연결고리! (중요)
-  nickname  String
+  email     String   @unique
+  nickname  String  
   bio       String?  // 자기소개
   avatarUrl String?  // 프사
   

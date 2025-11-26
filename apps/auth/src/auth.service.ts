@@ -4,11 +4,13 @@ import {
   InternalServerErrorException,
   UnauthorizedException,
   HttpException,
+  Inject,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from './prisma/prisma.service';
 import * as bcrypt from 'bcrypt';
 import { toRpcException } from './decorator/toRpcException';
+import { ClientProxy } from '@nestjs/microservices';
 
 @Injectable()
 export class AuthService {
@@ -16,6 +18,7 @@ export class AuthService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
+    @Inject('USER_SERVICE') private readonly userClient: ClientProxy,
   ) {}
 
   private findUserByEmail(email: string) {
@@ -33,7 +36,7 @@ export class AuthService {
         throw new BadRequestException('Email already in use');
       }
       const hashedPassword = await bcrypt.hash(password, 10);
-      await this.prisma.user.create({
+      const newUser = await this.prisma.user.create({
         data: {
           email,
           password: hashedPassword,
@@ -41,7 +44,16 @@ export class AuthService {
           role: 'USER', // 기본 권한
         },
       });
-      console.log('User registered:', email);
+      console.log('User registered:', newUser.email);
+      this.userClient.emit('create.user.profile', {
+        userId: newUser.id,
+        email: newUser.email,
+        nickname: newUser.name,
+      });
+      console.log(
+        '🚀 [Auth] User 서비스로 create.user.profile 신호를 보냅니다...',
+      );
+
       return { statusCode: 201, message: 'successfully registered' };
     } catch (error) {
       if (error instanceof HttpException) throw error;

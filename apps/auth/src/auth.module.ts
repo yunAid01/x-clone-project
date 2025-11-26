@@ -5,6 +5,9 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { PrismaModule } from './prisma/prisma.module';
 import { JwtModule } from '@nestjs/jwt';
 
+//
+import { ClientsModule, Transport } from '@nestjs/microservices';
+
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -28,6 +31,23 @@ import { JwtModule } from '@nestjs/jwt';
       }),
       inject: [ConfigService],
     }),
+    ClientsModule.registerAsync([
+      {
+        name: 'USER_SERVICE',
+        imports: [ConfigModule],
+        inject: [ConfigService],
+        useFactory: (configService: ConfigService) => ({
+          transport: Transport.RMQ,
+          options: {
+            urls: [configService.get('RABBITMQ_URL')],
+            queue: 'user_queue',
+            queueOptions: {
+              durable: false,
+            },
+          },
+        }),
+      },
+    ]),
     PrismaModule,
   ],
   controllers: [AuthController],

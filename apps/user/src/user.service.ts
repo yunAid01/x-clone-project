@@ -9,6 +9,23 @@ import { PrismaService } from './prisma/prisma.service';
 export class UserService {
   constructor(private readonly prisma: PrismaService) {}
 
+  async createUserProfile(data: any) {
+    const { userId, email, nickname } = data;
+    try {
+      const userProfile = await this.prisma.userProfile.create({
+        data: {
+          userId: userId,
+          email: email,
+          nickname: nickname,
+        },
+      });
+      console.log(`✅ [User] 프로필 생성 완료!`);
+      return userProfile;
+    } catch (error) {
+      throw new InternalServerErrorException('User profile creation failed');
+    }
+  }
+
   async getUserProfile(id: string) {
     const userProfile = await this.prisma.userProfile.findUnique({
       where: { id: id },

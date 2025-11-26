@@ -1,28 +1,47 @@
-import { Controller } from '@nestjs/common';
+import { Controller, Logger } from '@nestjs/common';
 import { UserService } from './user.service';
-import { MessagePattern } from '@nestjs/microservices';
+import {
+  Ctx,
+  EventPattern,
+  MessagePattern,
+  Payload,
+  RmqContext,
+} from '@nestjs/microservices';
 
 @Controller()
 export class UserController {
+  private readonly logger = new Logger(UserController.name);
+
   constructor(private readonly userService: UserService) {}
 
+  @EventPattern('create.user.profile')
+  async createUserProfile(@Payload() data: any) {
+    try {
+      await this.userService.createUserProfile(data);
+      this.logger.log(`✅ 프로필 생성 완료! User ID: ${data.userId}`);
+    } catch (error) {
+      this.logger.error(error);
+      this.logger.error(`❌ 프로필 생성 실패! User ID: ${data.userId}`);
+    }
+  }
+
   @MessagePattern({ cmd: 'getUser' })
-  getUserProfile(id: string) {
+  getUserProfile(@Payload() id: string) {
     return this.userService.getUserProfile(id);
   }
 
   @MessagePattern({ cmd: 'updateUser' })
-  updateUser(data: any) {
+  updateUser(@Payload() data: any) {
     return this.userService.updateUserProfile(data);
   }
 
   @MessagePattern({ cmd: 'followUser' })
-  followUser(data: any) {
+  followUser(@Payload() data: any) {
     return this.userService.followUser(data.userId, data.targetUserId);
   }
 
   @MessagePattern({ cmd: 'unfollowUser' })
-  unfollowUser(data: any) {
+  unfollowUser(@Payload() data: any) {
     return this.userService.unfollowUser(data.userId, data.targetUserId);
   }
 }
