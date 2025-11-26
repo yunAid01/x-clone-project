@@ -1,0 +1,26 @@
+// notification_db/schema.prisma
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_NOTIFICATION_URL")
+}
+
+// 클라이언트 생성기 설정
+generator client {
+  provider = "prisma-client-js"
+  output   = "../../../node_modules/@prisma/client-notification"
+}
+
+model Notification {
+  id          String   @id @default(uuid())
+  recipientId String   // 알림 받을 사람 (B)
+  senderId    String   // 행동 한 사람 (A)
+  type        NotificationType   // "FOLLOW", "LIKE", "RETWEET" 등
+  message     String   // "A님이 회원님을 팔로우합니다."
+  isRead      Boolean  @default(false)
+  createdAt   DateTime @default(now())
+}
+enum NotificationType {
+  FOLLOW
+  LIKE
+  RETWEET
+}

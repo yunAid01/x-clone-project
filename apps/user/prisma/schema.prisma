@@ -1,0 +1,37 @@
+// user_db/schema.prisma
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_USER_URL")
+}
+
+// 클라이언트 생성기 설정
+generator client {
+  provider = "prisma-client-js"
+  output   = "../../../node_modules/@prisma/client-user"
+}
+
+model UserProfile {
+  id        String   @id @default(uuid())
+  userId    String   @unique // Auth 서비스의 User ID와 연결고리! (중요)
+  nickname  String
+  bio       String?  // 자기소개
+  avatarUrl String?  // 프사
+  
+  // 나를 팔로우 하는 사람들
+  followers Follow[] @relation("UserFollowedBy")
+  // 내가 팔로우 하는 사람들
+  following Follow[] @relation("UserFollows")
+  
+}
+
+model Follow {
+  id          String      @id @default(uuid())
+  followerId  String      // 팔로우 하는 사람 
+  followingId String      // 팔로우 당하는 사람
+  createdAt   DateTime    @default(now())
+
+  follower    UserProfile @relation("UserFollows", fields: [followerId], references: [id])
+  following   UserProfile @relation("UserFollowedBy", fields: [followingId], references: [id])
+  
+  @@unique([followerId, followingId]) // 중복 팔로우 방지
+}

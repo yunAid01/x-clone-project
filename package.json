@@ -16,11 +16,13 @@
     "db:migrate:auth": "dotenv -e .env -- pnpm --filter @repo/auth -- run prisma:migrate",
     "db:migrate:twit": "dotenv -e .env -- pnpm --filter @repo/twit -- run prisma:migrate",
     "db:migrate:user": "dotenv -e .env -- pnpm --filter @repo/user -- run prisma:migrate",
-    "db:migrate:all": "pnpm db:migrate:auth && pnpm db:migrate:twit && pnpm db:migrate:user",
+    "db:migrate:notification": "dotenv -e .env -- pnpm --filter @repo/notification -- run prisma:migrate",
+    "db:migrate:all": "pnpm db:migrate:auth && pnpm db:migrate:twit && pnpm db:migrate:user && pnpm db:migrate:notification",
     "db:push:auth:test": "dotenv -e .env.test -- pnpm --filter @repo/auth -- run prisma:db:push --force-reset",
     "db:push:twit:test": "dotenv -e .env.test -- pnpm --filter @repo/twit -- run prisma:db:push --force-reset",
     "db:push:user:test": "dotenv -e .env.test -- pnpm --filter @repo/user -- run prisma:db:push --force-reset",
-    "db:push:test": "pnpm db:push:auth:test && pnpm db:push:twit:test && pnpm db:push:user:test",
+    "db:push:notification:test": "dotenv -e .env.test -- pnpm --filter @repo/notification -- run prisma:db:push --force-reset",
+    "db:push:test": "pnpm db:push:auth:test && pnpm db:push:twit:test && pnpm db:push:user:test && pnpm db:push:notification:test",
     "test:e2e": "cross-env NODE_ENV=test pnpm db:test && dotenv -e .env.test -- jest --config ./apps/api-gateway/test/jest-e2e.json"
   },
   "devDependencies": {

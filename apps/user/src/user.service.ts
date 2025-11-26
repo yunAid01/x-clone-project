@@ -1,8 +1,97 @@
-import { Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  InternalServerErrorException,
+} from '@nestjs/common';
+import { PrismaService } from './prisma/prisma.service';
 
 @Injectable()
 export class UserService {
-  getHello(): string {
-    return 'Hello World!';
+  constructor(private readonly prisma: PrismaService) {}
+
+  async getUserProfile(id: string) {
+    const userProfile = await this.prisma.userProfile.findUnique({
+      where: { id: id },
+    });
+    return userProfile;
+  }
+
+  async updateUserProfile(data: any) {
+    const { id, ...updateData } = data;
+    const updatedUser = await this.prisma.userProfile.update({
+      where: { id: id },
+      data: updateData,
+    });
+    return updatedUser;
+  }
+
+  async followUser(userId: string, targetUserId: string) {
+    const targetUser = await this.prisma.userProfile.findUnique({
+      where: { id: targetUserId },
+    });
+    if (!targetUser) {
+      throw new BadRequestException('Target user does not exist');
+    }
+    if (userId === targetUserId) {
+      throw new BadRequestException('Cannot follow yourself');
+    }
+    const existingFollow = await this.prisma.follow.findUnique({
+      where: {
+        followerId_followingId: {
+          followerId: userId,
+          followingId: targetUserId,
+        },
+      },
+    });
+    if (existingFollow) {
+      throw new BadRequestException('Already following this user');
+    }
+    try {
+      await this.prisma.follow.create({
+        data: {
+          followerId: userId,
+          followingId: targetUserId,
+        },
+      });
+      return { message: 'Follow success' };
+    } catch (error) {
+      throw new InternalServerErrorException('follow failed');
+    }
+  }
+
+  async unfollowUser(userId: string, targetUserId: string) {
+    const targetUser = await this.prisma.userProfile.findUnique({
+      where: { id: targetUserId },
+    });
+    if (!targetUser) {
+      throw new BadRequestException('Target user does not exist');
+    }
+    if (userId === targetUserId) {
+      throw new BadRequestException('Cannot follow yourself');
+    }
+    const existingFollow = await this.prisma.follow.findUnique({
+      where: {
+        followerId_followingId: {
+          followerId: userId,
+          followingId: targetUserId,
+        },
+      },
+    });
+    if (!existingFollow) {
+      throw new BadRequestException('Not following this user');
+    }
+    try {
+      await this.prisma.follow.delete({
+        where: {
+          followerId_followingId: {
+            followerId: userId,
+            followingId: targetUserId,
+          },
+        },
+      });
+      return { message: 'Unfollow success' };
+    } catch (error) {
+      throw new InternalServerErrorException('unfollow failed');
+    }
   }
 }

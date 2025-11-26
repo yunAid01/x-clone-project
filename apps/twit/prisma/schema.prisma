@@ -1,0 +1,29 @@
+// twit_db/schema.prisma
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_TWIT_URL")
+}
+
+// 클라이언트 생성기 설정
+generator client {
+  provider = "prisma-client-js"
+  output   = "../../../node_modules/@prisma/client-twit"
+}
+
+model Twit {
+  id        String   @id @default(uuid())
+  content   String
+  authorId  String   // 작성자의 ID (User 서비스의 그 ID)
+  createdAt DateTime @default(now())
+  
+  likes     Like[]
+}
+
+model Like {
+  id        String   @id @default(uuid())
+  twitId    String
+  userId    String   // 좋아요 누른 사람 ID
+  twit      Twit     @relation(fields: [twitId], references: [id])
+
+  @@unique([twitId, userId]) // 한 트윗에 좋아요는 한 번만
+}

@@ -9,6 +9,7 @@ datasource db {
 // 클라이언트 생성기 설정
 generator client {
   provider = "prisma-client-js"
+  output   = "../../../node_modules/@prisma/client-auth"
 }
 
 // 1. 유저 모델 (Auth 서비스용)

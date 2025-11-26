@@ -78,13 +78,13 @@ export class AllExceptionsFilter implements ExceptionFilter {
     // =================================================================
     // 3. 로그 출력 (디버깅용)
     // =================================================================
-    console.error('======================================');
-    console.error('🚨 [Global Filter] 에러 발생!');
-    console.error(`👉 Request URL: ${request.url}`);
-    console.error(`👉 Final Status: ${status}`);
-    console.error(`👉 Message: ${JSON.stringify(message)}`);
-    // console.error('👉 Original Error:', exception); // 필요하면 주석 해제해서 원본 확인
-    console.error('======================================');
+    // console.error('======================================');
+    // console.error('🚨 [Global Filter] 에러 발생!');
+    // console.error(`👉 Request URL: ${request.url}`);
+    // console.error(`👉 Final Status: ${status}`);
+    // console.error(`👉 Message: ${JSON.stringify(message)}`);
+    // // console.error('👉 Original Error:', exception); // 필요하면 주석 해제해서 원본 확인
+    // console.error('======================================');
 
     // =================================================================
     // 4. 응답 전송

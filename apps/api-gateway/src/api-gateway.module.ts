@@ -2,6 +2,10 @@ import { Module } from '@nestjs/common';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AuthController } from './auth/auth.controller';
+import { JwtStrategy } from './auth/jwt.strategy';
+// redis cache
+import { CacheModule } from '@nestjs/cache-manager';
+import * as redisStore from 'cache-manager-ioredis';
 
 // validation zod pipe
 import { ZodSerializerInterceptor, ZodValidationPipe } from 'nestjs-zod';
@@ -84,9 +88,21 @@ import { APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
         }),
       },
     ]),
+    CacheModule.registerAsync({
+      isGlobal: true,
+      imports: [ConfigModule],
+      useFactory: async (configService: ConfigService) => ({
+        store: redisStore,
+        host: 'localhost',
+        port: configService.get<number>('REDIS_PORT'),
+        ttl: 600, // 캐시 유지 시간 (초 단위)
+      }),
+      inject: [ConfigService],
+    }),
   ],
   controllers: [AuthController],
   providers: [
+    JwtStrategy,
     {
       provide: APP_PIPE,
       useClass: ZodValidationPipe,
