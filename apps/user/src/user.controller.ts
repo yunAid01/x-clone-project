@@ -14,9 +14,10 @@ export class UserController {
 
   constructor(private readonly userService: UserService) {}
 
-  @EventPattern('create.user.profile')
+  @EventPattern('user.created')
   async createUserProfile(@Payload() data: any) {
     try {
+      console.log('🚀 [User] 이벤트 수신완료..');
       await this.userService.createUserProfile(data);
       this.logger.log(`✅ 프로필 생성 완료! User ID: ${data.userId}`);
     } catch (error) {

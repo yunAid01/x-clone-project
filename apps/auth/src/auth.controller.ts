@@ -13,6 +13,7 @@ export class AuthController {
 
   @MessagePattern({ cmd: 'register' })
   userRegister(@Payload() data: any) {
+    console.log('🚀 [Auth] userRegister 메서드가 호출되었습니다...');
     return this.authService.userRegister(data);
   }
 }

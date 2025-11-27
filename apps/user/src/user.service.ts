@@ -22,6 +22,7 @@ export class UserService {
       console.log(`✅ [User] 프로필 생성 완료!`);
       return userProfile;
     } catch (error) {
+      console.error('❌ [User] 프로필 생성 실패:', error);
       throw new InternalServerErrorException('User profile creation failed');
     }
   }

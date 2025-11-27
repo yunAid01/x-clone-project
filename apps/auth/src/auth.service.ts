@@ -2,7 +2,6 @@ import {
   BadRequestException,
   Injectable,
   InternalServerErrorException,
-  UnauthorizedException,
   HttpException,
   Inject,
 } from '@nestjs/common';
@@ -11,6 +10,7 @@ import { PrismaService } from './prisma/prisma.service';
 import * as bcrypt from 'bcrypt';
 import { toRpcException } from './decorator/toRpcException';
 import { ClientProxy } from '@nestjs/microservices';
+import { RabbitMQService } from './rabbitmq/rabbitmq.service';
 
 @Injectable()
 export class AuthService {
@@ -18,7 +18,7 @@ export class AuthService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
-    @Inject('USER_SERVICE') private readonly userClient: ClientProxy,
+    private readonly mq: RabbitMQService,
   ) {}
 
   private findUserByEmail(email: string) {
@@ -29,6 +29,7 @@ export class AuthService {
   @toRpcException()
   async userRegister(data: any) {
     try {
+      console.log('🚀 [Auth] userRegister 메서드 안에 들어옴..');
       const { email, password, name } = data;
       const existingUser = await this.findUserByEmail(email);
       if (existingUser) {
@@ -44,15 +45,12 @@ export class AuthService {
           role: 'USER', // 기본 권한
         },
       });
-      console.log('User registered:', newUser.email);
-      this.userClient.emit('create.user.profile', {
+      this.mq.publish('user.created', {
         userId: newUser.id,
         email: newUser.email,
         nickname: newUser.name,
       });
-      console.log(
-        '🚀 [Auth] User 서비스로 create.user.profile 신호를 보냅니다...',
-      );
+      console.log('🚀 [Auth] User 서비스로 user.created 신호를 보냅니다...');
 
       return { statusCode: 201, message: 'successfully registered' };
     } catch (error) {

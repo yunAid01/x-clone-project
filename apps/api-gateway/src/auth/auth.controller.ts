@@ -1,4 +1,11 @@
-import { Controller, Inject, Post, Body, HttpException, HttpCode } from '@nestjs/common';
+import {
+  Controller,
+  Inject,
+  Post,
+  Body,
+  HttpException,
+  HttpCode,
+} from '@nestjs/common';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
 
 // DTOs
@@ -13,6 +20,8 @@ export class AuthController {
   ) {}
 
   @Post('register')
+  @HttpCode(201)
+  // todo - @ZodResponse()
   userRegister(@Body() registerData: RegisterDto) {
     console.log('🚀 [Gateway] Auth 서비스로 register 신호를 보냅니다...');
     return this.authClient.send({ cmd: 'register' }, registerData);
