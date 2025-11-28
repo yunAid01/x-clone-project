@@ -15,16 +15,14 @@ import { catchError, throwError } from 'rxjs';
 
 @Controller('auth')
 export class AuthController {
-  constructor(
-    @Inject('AUTH_SERVICE') private readonly authClient: ClientProxy,
-  ) {}
+  constructor(@Inject('AUTH') private readonly authClient: ClientProxy) {}
 
   @Post('register')
   @HttpCode(201)
   // todo - @ZodResponse()
   userRegister(@Body() registerData: RegisterDto) {
     console.log('🚀 [Gateway] Auth 서비스로 register 신호를 보냅니다...');
-    return this.authClient.send({ cmd: 'register' }, registerData);
+    return this.authClient.send('register', registerData);
   }
 
   @Post('login')
@@ -32,6 +30,6 @@ export class AuthController {
   // todo - @ZodResponse()
   userLogin(@Body() loginData: LoginDto) {
     console.log('🚀 [Gateway] Auth 서비스로 login 신호를 보냅니다...');
-    return this.authClient.send({ cmd: 'login' }, { ...loginData });
+    return this.authClient.send('login', { ...loginData });
   }
 }

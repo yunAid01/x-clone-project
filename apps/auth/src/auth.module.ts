@@ -5,9 +5,8 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { PrismaModule } from './prisma/prisma.module';
 import { JwtModule } from '@nestjs/jwt';
 
-//
 import { ClientsModule, Transport } from '@nestjs/microservices';
-import { RabbitMQService } from './rabbitmq/rabbitmq.service';
+import { RmqModule, RmqPublisher } from '@repo/common';
 
 @Module({
   imports: [
@@ -32,9 +31,10 @@ import { RabbitMQService } from './rabbitmq/rabbitmq.service';
       }),
       inject: [ConfigService],
     }),
+    RmqModule.register({ name: 'AUTH' }),
     PrismaModule,
   ],
   controllers: [AuthController],
-  providers: [AuthService, RabbitMQService],
+  providers: [AuthService, RmqPublisher],
 })
 export class AuthModule {}

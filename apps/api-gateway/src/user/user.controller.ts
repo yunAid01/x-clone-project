@@ -20,9 +20,7 @@ import { ZodResponse } from 'nestjs-zod';
 
 @Controller('user')
 export class UserController {
-  constructor(
-    @Inject('USER_SERVICE') private readonly userClient: ClientProxy,
-  ) {}
+  constructor(@Inject('USER') private readonly userClient: ClientProxy) {}
 
   @Get(':id')
   @UseGuards(AuthGuard('jwt'))

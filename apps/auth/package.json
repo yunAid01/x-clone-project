@@ -25,6 +25,8 @@
     "test:e2e": "cross-env NODE_ENV=test jest --config ./test/jest-e2e.json"
   },
   "dependencies": {
+    "@repo/validation": "workspace:*",
+    "@repo/common": "workspace:*",
     "@nestjs/common": "^11.0.1",
     "@nestjs/config": "^4.0.2",
     "@nestjs/core": "^11.0.1",
@@ -33,7 +35,6 @@
     "@nestjs/passport": "^11.0.5",
     "@nestjs/platform-express": "^11.0.1",
     "@prisma/client": "^6.1.0",
-    "@repo/validation": "workspace:*",
     "@types/bcrypt": "^6.0.0",
     "amqplib": "^0.10.9",
     "bcrypt": "^6.0.0",

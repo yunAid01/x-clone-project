@@ -6,6 +6,7 @@ import { JwtStrategy } from './auth/jwt.strategy';
 // redis cache
 import { CacheModule } from '@nestjs/cache-manager';
 import * as redisStore from 'cache-manager-ioredis';
+import { RmqModule } from '@repo/common';
 
 // validation zod pipe
 import { ZodSerializerInterceptor, ZodValidationPipe } from 'nestjs-zod';
@@ -26,75 +27,17 @@ import { APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
         }
       })(),
     }),
-    ClientsModule.registerAsync([
-      {
-        name: 'AUTH_SERVICE',
-        imports: [ConfigModule],
-        inject: [ConfigService],
-        useFactory: (configService: ConfigService) => ({
-          transport: Transport.RMQ,
-          options: {
-            urls: [`${configService.get<string>('RABBITMQ_URL')}`],
-            queue: 'auth_queue',
-            queueOptions: {
-              durable: false,
-            },
-          },
-        }),
-      },
-      {
-        name: 'USER_SERVICE',
-        imports: [ConfigModule],
-        inject: [ConfigService],
-        useFactory: (configService: ConfigService) => ({
-          transport: Transport.RMQ,
-          options: {
-            urls: [`${configService.get<string>('RABBITMQ_URL')}`],
-            queue: 'user_queue',
-            queueOptions: {
-              durable: false,
-            },
-          },
-        }),
-      },
-      {
-        name: 'TWIT_SERVICE',
-        imports: [ConfigModule],
-        inject: [ConfigService],
-        useFactory: (configService: ConfigService) => ({
-          transport: Transport.RMQ,
-          options: {
-            urls: [`${configService.get<string>('RABBITMQ_URL')}`],
-            queue: 'twit_queue',
-            queueOptions: {
-              durable: false,
-            },
-          },
-        }),
-      },
-      {
-        name: 'NOTIFICATION_SERVICE',
-        imports: [ConfigModule],
-        inject: [ConfigService],
-        useFactory: (configService: ConfigService) => ({
-          transport: Transport.RMQ,
-          options: {
-            urls: [`${configService.get<string>('RABBITMQ_URL')}`],
-            queue: 'notification_queue',
-            queueOptions: {
-              durable: false,
-            },
-          },
-        }),
-      },
-    ]),
+    RmqModule.register({ name: 'AUTH' }),
+    RmqModule.register({ name: 'USER' }),
+    RmqModule.register({ name: 'TWIT' }),
+    RmqModule.register({ name: 'NOTIFICATION' }),
     CacheModule.registerAsync({
       isGlobal: true,
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
         store: redisStore,
         host: 'localhost',
-        port: configService.get<number>('REDIS_PORT'),
+        port: configService.get('REDIS_PORT'),
         ttl: 600, // 캐시 유지 시간 (초 단위)
       }),
       inject: [ConfigService],

@@ -1,72 +1,38 @@
 import { NestFactory } from '@nestjs/core';
 import { UserModule } from './user.module';
-import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { ConfigService } from '@nestjs/config';
-import * as amqp from 'amqplib'; // 👈 amqplib 직접 사용 (이미 설치되어 있음)
-
+import { RmqService } from '@repo/common';
+import { setupRabbitMQ, RABBITMQ_EXCHANGE } from '@repo/common';
 // 🐰 RabbitMQ 설정을 강제로 맞춰주는 함수
-async function setupRabbitMQ(
-  url: string,
-  queue: string,
-  exchange: string,
-  routingKey: string,
-) {
-  console.log(`🐰 [RabbitMQ Setup] ${queue}를 ${exchange}에 바인딩 중...`);
-  try {
-    const connection = await amqp.connect(url);
-    const channel = await connection.createChannel();
-
-    // 1. 교환소(Exchange)가 없으면 만듭니다. (Topic 타입 추천)
-    await channel.assertExchange(exchange, 'topic', { durable: true });
-
-    // 2. 큐(Queue)가 없으면 만듭니다. (NestJS 설정과 맞춰야 함)
-    await channel.assertQueue(queue, { durable: false }); // durable은 main.ts 설정과 동일하게!
-
-    // 3. ★ 핵심: 큐와 교환소를 연결(Bind)합니다.
-    await channel.bindQueue(queue, exchange, routingKey);
-
-    console.log(`✅ [RabbitMQ Setup] 바인딩 성공! (${queue} <--> ${exchange})`);
-    await connection.close();
-  } catch (error) {
-    console.error('❌ [RabbitMQ Setup] 에러 발생:', error);
-  }
-}
 
 async function bootstrap() {
-  const appContext = await NestFactory.createApplicationContext(UserModule);
-  const configService = appContext.get(ConfigService);
+  // 1. 하이브리드 앱 패턴 사용
+  // createMicroservice 대신 create를 사용하여 HTTP 서버와 마이크로서비스를 동시에 구동합니다.
+  // 이렇게 하면 DI 컨테이너에서 ConfigService나 RmqService를 쉽게 꺼낼 수 있습니다.
+  const app = await NestFactory.create(UserModule);
+
+  const rmqService = app.get<RmqService>(RmqService);
+  const configService = app.get<ConfigService>(ConfigService);
+
+  // 2. 환경변수 가져오기
   const RMQ_URL = configService.get('RABBITMQ_URL');
+  // RmqService는 'RABBITMQ_USER_QUEUE' 환경변수를 찾으므로, 여기서도 맞춰줍니다.
+  const QUEUE_NAME = configService.get('RABBITMQ_USER_QUEUE');
+  const EXCHANGE_NAME = RABBITMQ_EXCHANGE;
+  const ROUTING_KEY = 'user.#';
 
-  // 👇 서비스 이름과 교환소 이름 설정 (원하는 이름으로 변경 가능)
-  const QUEUE_NAME = 'user_queue';
-  const EXCHANGE_NAME = 'x_clone_exchange'; // 사용하려는 교환소 이름
-  const ROUTING_KEY = 'user.#'; // user로 시작하는 모든 메시지를 받음
-
-  // 1. 서버 시작 전에 바인딩부터 확실하게 맺기!
+  // 3. 서버 시작 전 바인딩 수행
   await setupRabbitMQ(RMQ_URL, QUEUE_NAME, EXCHANGE_NAME, ROUTING_KEY);
 
-  // 2. 마이크로서비스 실행
-  const app = await NestFactory.createMicroservice<MicroserviceOptions>(
-    UserModule,
-    {
-      transport: Transport.RMQ,
-      options: {
-        urls: [`${RMQ_URL}`],
-        queue: QUEUE_NAME,
-        queueOptions: {
-          durable: false, // 위 setupRabbitMQ와 맞춰주세요
-        },
-        socketOptions: {
-          clientProperties: {
-            connection_name: 'User Service (Worker)',
-          },
-        },
-      },
-    },
-  );
+  // 4. 마이크로서비스 연결 (RmqService 활용)
+  // 'USER'를 넣으면 내부적으로 RABBITMQ_USER_QUEUE 환경변수 값을 큐 이름으로 사용합니다.
+  // noAck: false로 설정하여 수동 ACK 모드를 사용합니다 (안정성 확보).
+  app.connectMicroservice(rmqService.getOptions('USER', false));
 
-  await app.listen();
-  console.log(`[User] 서비스가 실행되었습니다! (Queue: ${QUEUE_NAME})`);
-  await appContext.close();
+  await app.startAllMicroservices();
+
+  // 5. HTTP 서버 시작 (헬스 체크 등을 위해 필요)
+  await app.listen(4020);
+  console.log(`🚀 [User] 서비스가 실행되었습니다! (Queue: ${QUEUE_NAME})`);
 }
 bootstrap();

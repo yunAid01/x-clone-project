@@ -1,0 +1,36 @@
+{
+  "name": "@repo/common",
+  "version": "1.0.0",
+  "private": true,
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "clean": "rm -rf dist",
+    "dev": "tsc -p tsconfig.json --watch",
+    "check-types": "tsc -p tsconfig.json --noEmit"
+  },
+  "peerDependencies": {
+    "amqplib": "^0.10.9",
+    "@nestjs/config": "^4.0.2",
+    "@nestjs/microservices": "^11.1.9",
+    "@nestjs/common": "^11.0.0",
+    "@nestjs/core": "^11.0.0",
+    "reflect-metadata": "^0.2.0",
+    "rxjs": "^7.8.1"
+  },
+  "devDependencies": {
+    "amqplib": "^0.10.9",
+    "@repo/typescript-config": "workspace:*",
+    "@nestjs/config": "^4.0.2",
+    "@nestjs/microservices": "^11.1.9",
+    "@nestjs/common": "^11.0.1",
+    "@nestjs/core": "^11.0.1",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.1",
+    "typescript": "^5.9.2"
+  }
+}

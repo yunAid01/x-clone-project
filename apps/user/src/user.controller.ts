@@ -7,22 +7,28 @@ import {
   Payload,
   RmqContext,
 } from '@nestjs/microservices';
+import { RmqService } from '@repo/common';
 
 @Controller()
 export class UserController {
   private readonly logger = new Logger(UserController.name);
 
-  constructor(private readonly userService: UserService) {}
+  constructor(
+    private readonly userService: UserService,
+    private readonly rmqService: RmqService,
+  ) {}
 
   @EventPattern('user.created')
-  async createUserProfile(@Payload() data: any) {
+  async createUserProfile(@Payload() data: any, @Ctx() context: RmqContext) {
     try {
       console.log('🚀 [User] 이벤트 수신완료..');
       await this.userService.createUserProfile(data);
       this.logger.log(`✅ 프로필 생성 완료! User ID: ${data.userId}`);
+      this.rmqService.ack(context); // 성공 시 ACK 전송
     } catch (error) {
       this.logger.error(error);
       this.logger.error(`❌ 프로필 생성 실패! User ID: ${data.userId}`);
+      this.rmqService.ack(context); // 오류가 나도 로그만 남기고 ACK를 보내서 메시지 재처리를 막음
     }
   }
 

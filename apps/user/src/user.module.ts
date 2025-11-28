@@ -4,6 +4,7 @@ import { UserService } from './user.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { PrismaModule } from './prisma/prisma.module';
 import { ClientsModule, Transport } from '@nestjs/microservices';
+import { RmqModule } from '@repo/common';
 
 @Module({
   imports: [
@@ -21,23 +22,7 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
         }
       })(),
     }),
-    ClientsModule.registerAsync([
-      {
-        name: 'EVENT_SERVICE',
-        imports: [ConfigModule],
-        inject: [ConfigService],
-        useFactory: (configService: ConfigService) => ({
-          transport: Transport.RMQ,
-          options: {
-            urls: [configService.get('RABBITMQ_URL')],
-            queue: 'x_clone_exchange',
-            queueOptions: {
-              durable: false,
-            },
-          },
-        }),
-      },
-    ]),
+    RmqModule.register({ name: 'USER' }),
     PrismaModule,
   ],
   controllers: [UserController],

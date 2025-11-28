@@ -8,9 +8,8 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from './prisma/prisma.service';
 import * as bcrypt from 'bcrypt';
-import { toRpcException } from './decorator/toRpcException';
-import { ClientProxy } from '@nestjs/microservices';
-import { RabbitMQService } from './rabbitmq/rabbitmq.service';
+import { toRpcException } from '@repo/common';
+import { RmqPublisher } from '@repo/common';
 
 @Injectable()
 export class AuthService {
@@ -18,7 +17,7 @@ export class AuthService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
-    private readonly mq: RabbitMQService,
+    private readonly publisher: RmqPublisher,
   ) {}
 
   private findUserByEmail(email: string) {
@@ -45,7 +44,7 @@ export class AuthService {
           role: 'USER', // 기본 권한
         },
       });
-      this.mq.publish('user.created', {
+      this.publisher.publish('user.created', {
         userId: newUser.id,
         email: newUser.email,
         nickname: newUser.name,
