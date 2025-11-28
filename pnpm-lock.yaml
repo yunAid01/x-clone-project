@@ -108,6 +108,9 @@ importers:
       cache-manager-ioredis:
         specifier: ^2.1.0
         version: 2.1.0
+      express:
+        specifier: ^5.1.0
+        version: 5.1.0
       ioredis:
         specifier: ^5.8.2
         version: 5.8.2
@@ -696,6 +699,9 @@ importers:
       amqplib:
         specifier: ^0.10.9
         version: 0.10.9
+      express:
+        specifier: ^5.1.0
+        version: 5.1.0
       reflect-metadata:
         specifier: ^0.2.2
         version: 0.2.2

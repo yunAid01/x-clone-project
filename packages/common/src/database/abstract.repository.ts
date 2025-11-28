@@ -15,7 +15,7 @@ export abstract class AbstractRepository<TDocument> {
   abstract find(filterQuery: any): Promise<TDocument[]>;
 
   // 공통 에러 처리 로직
-  protected checkFound(document: TDocument | null, entityName: string): void {
+  protected ensureExists(document: TDocument | null, entityName: string): void {
     if (!document) {
       this.logger.warn(`${entityName} not found with query`);
       throw new NotFoundException(`${entityName} not found.`);

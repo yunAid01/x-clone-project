@@ -1,6 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { ApiGateWayModule } from './api-gateway.module';
-import { AllExceptionsFilter } from './common/filters/http-exception.filter';
+import { GlobalExceptionFilter } from '@repo/common';
 // swagger imports
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { cleanupOpenApiDoc } from 'nestjs-zod';
@@ -15,7 +15,7 @@ async function bootstrap() {
 
   app.enableCors({ origin: corsOrigin });
   app.setGlobalPrefix('api');
-  app.useGlobalFilters(new AllExceptionsFilter());
+  app.useGlobalFilters(new GlobalExceptionFilter());
   // swagger config
   const openApiDoc = SwaggerModule.createDocument(
     app,

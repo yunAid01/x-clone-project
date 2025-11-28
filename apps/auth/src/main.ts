@@ -2,7 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { AuthModule } from './auth.module';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { ConfigService } from '@nestjs/config';
-import { RmqService } from '@repo/common';
+import { FitRpcExceptionFilter, RmqService } from '@repo/common';
 import { setupRabbitMQ } from '@repo/common';
 // 🐰 RabbitMQ 설정을 강제로 맞춰주는 함수
 
@@ -29,7 +29,7 @@ async function bootstrap() {
   // 'AUTH'를 넣으면 내부적으로 RABBITMQ_AUTH_QUEUE 환경변수 값을 큐 이름으로 사용합니다.
   // noAck: false로 설정하여 수동 ACK 모드를 사용합니다 (안정성 확보).
   app.connectMicroservice(rmqService.getOptions('AUTH', false));
-
+  app.useGlobalFilters(new FitRpcExceptionFilter());
   await app.startAllMicroservices();
 
   // 5. HTTP 서버 시작 (헬스 체크 등을 위해 필요)

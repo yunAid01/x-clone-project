@@ -13,6 +13,7 @@
     "check-types": "tsc -p tsconfig.json --noEmit"
   },
   "peerDependencies": {
+    "express": "^5.1.0",
     "amqplib": "^0.10.9",
     "@nestjs/config": "^4.0.2",
     "@nestjs/microservices": "^11.1.9",
@@ -22,6 +23,7 @@
     "rxjs": "^7.8.1"
   },
   "devDependencies": {
+    "express": "^5.1.0",
     "amqplib": "^0.10.9",
     "@repo/typescript-config": "workspace:*",
     "@nestjs/config": "^4.0.2",

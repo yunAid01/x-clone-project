@@ -21,7 +21,6 @@
     "test:e2e": "jest  --config ./test/jest-e2e.json"
   },
   "dependencies": {
-    "@repo/common": "workspace:*",
     "@nestjs/cache-manager": "^3.0.1",
     "@nestjs/common": "^11.0.1",
     "@nestjs/config": "^4.0.2",
@@ -30,11 +29,13 @@
     "@nestjs/passport": "^11.0.5",
     "@nestjs/platform-express": "^11.0.1",
     "@nestjs/swagger": "^11.2.3",
+    "@repo/common": "workspace:*",
     "@repo/validation": "workspace:*",
     "amqp-connection-manager": "^5.0.0",
     "amqplib": "^0.10.9",
     "cache-manager": "^7.2.5",
     "cache-manager-ioredis": "^2.1.0",
+    "express": "^5.1.0",
     "ioredis": "^5.8.2",
     "nestjs-zod": "^5.0.1",
     "passport": "^0.7.0",

@@ -4,94 +4,76 @@ import {
   InternalServerErrorException,
   HttpException,
   Inject,
+  Logger,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from './prisma/prisma.service';
 import * as bcrypt from 'bcrypt';
 import { toRpcException } from '@repo/common';
 import { RmqPublisher } from '@repo/common';
+import { AuthRepository } from './auth.repository';
 
 @Injectable()
 export class AuthService {
-  // PrismaService(DB)를 주방보조로 채용합니다.
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
-    private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
     private readonly publisher: RmqPublisher,
+    private readonly authRepository: AuthRepository,
   ) {}
-
-  private findUserByEmail(email: string) {
-    return this.prisma.user.findUnique({ where: { email } });
-  }
-  // 회원가입 요리 시작!
 
   @toRpcException()
   async userRegister(data: any) {
-    try {
-      console.log('🚀 [Auth] userRegister 메서드 안에 들어옴..');
-      const { email, password, name } = data;
-      const existingUser = await this.findUserByEmail(email);
-      if (existingUser) {
-        console.log('Registration failed: Email already in use', email);
-        throw new BadRequestException('Email already in use');
-      }
-      const hashedPassword = await bcrypt.hash(password, 10);
-      const newUser = await this.prisma.user.create({
-        data: {
-          email,
-          password: hashedPassword,
-          name,
-          role: 'USER', // 기본 권한
-        },
-      });
-      this.publisher.publish('user.created', {
-        userId: newUser.id,
-        email: newUser.email,
-        nickname: newUser.name,
-      });
-      console.log('🚀 [Auth] User 서비스로 user.created 신호를 보냅니다...');
-
-      return { statusCode: 201, message: 'successfully registered' };
-    } catch (error) {
-      if (error instanceof HttpException) throw error;
-      throw new InternalServerErrorException('Registration failed');
+    const { email, password, name } = data;
+    const existingUser = await this.authRepository.findByEmail(email);
+    if (existingUser) {
+      this.logger.warn(`Attempt to register with existing email: ${email}`);
+      throw new BadRequestException('register Error: Email already in use');
     }
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const newUser = await this.authRepository.create({
+      email,
+      password: hashedPassword,
+      name,
+      role: 'USER', // default
+      createdAt: new Date(),
+    });
+    this.publisher.publish('user.created', {
+      userId: newUser.id,
+      email: newUser.email,
+      nickname: newUser.name,
+    });
+    return { statusCode: 201, message: 'successfully registered' };
   }
 
   @toRpcException()
   async userLogin(data: any) {
-    try {
-      const { email, password } = data;
-      const existingUser = await this.findUserByEmail(email);
-      if (!existingUser) {
-        throw new BadRequestException('User not found');
-      }
-      // 2. 비밀번호 비교
-      const isPasswordValid = await bcrypt.compare(
-        password,
-        existingUser.password,
-      );
-      if (!isPasswordValid) {
-        throw new BadRequestException('Invalid credentials');
-      }
-      const token = this.jwtService.sign({
-        userId: existingUser.id,
-        email: existingUser.email,
-      });
-      // 3. 로그인 성공!
-      return {
-        statusCode: 200,
-        token: token,
-        message: 'successfully logged in',
-        user: {
-          id: existingUser.id,
-          email: existingUser.email,
-          name: existingUser.name,
-        },
-      };
-    } catch (error) {
-      if (error instanceof HttpException) throw error;
-      throw new InternalServerErrorException('Login failed');
+    const { email, password } = data;
+    const existingUser = await this.authRepository.findByEmail(email);
+    if (!existingUser) {
+      throw new BadRequestException('login Error: Invalid credentials');
     }
+    const isPasswordValid = await bcrypt.compare(
+      password,
+      existingUser.password,
+    );
+    if (!isPasswordValid) {
+      throw new BadRequestException('login Error: Invalid credentials');
+    }
+    const token = this.jwtService.sign({
+      userId: existingUser.id,
+      email: existingUser.email,
+    });
+    return {
+      statusCode: 200,
+      token: token,
+      message: 'successfully logged in',
+      user: {
+        id: existingUser.id,
+        email: existingUser.email,
+        name: existingUser.name,
+      },
+    };
   }
 }
