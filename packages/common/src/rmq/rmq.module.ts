@@ -33,7 +33,7 @@ export class RmqModule {
         }),
         ClientsModule.registerAsync([
           {
-            name,
+            name, // 'USER', 'TWIT', 'AUTH' 등
             useFactory: (configService: ConfigService) => ({
               transport: Transport.RMQ,
               options: {

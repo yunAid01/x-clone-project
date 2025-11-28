@@ -10,7 +10,6 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "clean": "rm -rf dist",
-    "dev": "tsc -p tsconfig.json --watch",
     "check-types": "tsc -p tsconfig.json --noEmit"
   },
   "peerDependencies": {

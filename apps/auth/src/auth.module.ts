@@ -7,6 +7,7 @@ import { JwtModule } from '@nestjs/jwt';
 
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { RmqModule, RmqPublisher } from '@repo/common';
+import { AuthRepository } from './auth.repository';
 
 @Module({
   imports: [
@@ -35,6 +36,6 @@ import { RmqModule, RmqPublisher } from '@repo/common';
     PrismaModule,
   ],
   controllers: [AuthController],
-  providers: [AuthService, RmqPublisher],
+  providers: [AuthService, RmqPublisher, AuthRepository],
 })
 export class AuthModule {}

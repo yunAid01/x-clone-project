@@ -359,6 +359,9 @@ importers:
       '@prisma/client':
         specifier: ^6.1.0
         version: 6.19.0(prisma@6.19.0(typescript@5.9.2))(typescript@5.9.2)
+      '@repo/common':
+        specifier: workspace:*
+        version: link:../../packages/common
       '@repo/validation':
         specifier: workspace:*
         version: link:../../packages/validation
@@ -456,6 +459,9 @@ importers:
       '@prisma/client':
         specifier: ^6.1.0
         version: 6.19.0(prisma@6.19.0(typescript@5.9.2))(typescript@5.9.2)
+      '@repo/common':
+        specifier: workspace:*
+        version: link:../../packages/common
       '@repo/validation':
         specifier: workspace:*
         version: link:../../packages/validation
