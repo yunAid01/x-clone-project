@@ -1,9 +1,9 @@
 services:
-  postgres:
+  fucking-postgres:
     image: postgres:15-alpine
     container_name: twitter_postgres
     ports:
-      - '${POSTGRES_PORT}:5432'
+      - '${POSTGRES_PORT}:${POSTGRES_PORT}'
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
@@ -12,32 +12,131 @@ services:
       - postgres_data:/var/lib/postgresql/data
       - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
 
-  # 빠른 저장소 (Redis)
-  redis:
+  fucking-redis:
     image: redis:alpine
     container_name: twitter_redis
     ports:
       - '${REDIS_PORT}:6379'
     command: redis-server --save 20 1 --loglevel warning
 
-  # 메시지 큐 (RabbitMQ)
-  rabbitmq:
+  fucking-rabbitmq:
     image: rabbitmq:3-management-alpine
     container_name: twitter_rabbitmq
     ports:
-      - '${RABBITMQ_PORT}:5672' # 서비스들이 통신하는 포트
-      - '${RABBITMQ_MANAGEMENT_PORT}:15672' # 우리가 눈으로 보는 관리자 웹 페이지 포트
+      - '${RABBITMQ_PORT}:${RABBITMQ_PORT}'
+      - '${RABBITMQ_MANAGEMENT_PORT}:${RABBITMQ_MANAGEMENT_PORT}'
     environment:
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
 
-  # (선택사항) DB를 쉽게 눈으로 보는 도구 (Adminer)
-  adminer:
+  api-gateway:
+    build:
+      context: .
+      dockerfile: apps/api-gateway/Dockerfile
+    container_name: x-clone-api-gateway
+    ports:
+      - '${API_GATEWAY_PORT}:${API_GATEWAY_PORT}'
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      PORT: ${API_GATEWAY_PORT}
+      RABBITMQ_URL: amqp://${RABBITMQ_DEFAULT_USER}:${RABBITMQ_DEFAULT_PASS}@fucking-rabbitmq:${RABBITMQ_PORT}/
+      RABBITMQ_AUTH_QUEUE: auth_queue
+      RABBITMQ_USER_QUEUE: user_queue
+      RABBITMQ_TWIT_QUEUE: twit_queue
+      RABBITMQ_NOTIFICATION_QUEUE: notification_queue
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
+      CORS_ORIGIN: ${CORS_ORIGIN}
+    depends_on:
+      - fucking-rabbitmq
+      - fucking-redis
+    restart: unless-stopped
+
+  auth-microservice:
+    build:
+      context: .
+      dockerfile: apps/auth/Dockerfile
+    container_name: x-clone-auth
+    ports:
+      - '${AUTH_SERVICE_PORT}:${AUTH_SERVICE_PORT}'
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      PORT: ${AUTH_SERVICE_PORT}
+      DATABASE_AUTH_URL: ${DATABASE_AUTH_URL}
+      RABBITMQ_URL: amqp://${RABBITMQ_DEFAULT_USER}:${RABBITMQ_DEFAULT_PASS}@fucking-rabbitmq:${RABBITMQ_PORT}/
+      RABBITMQ_AUTH_QUEUE: auth_queue
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
+    depends_on:
+      - fucking-postgres
+      - fucking-redis
+      - fucking-rabbitmq
+    restart: unless-stopped
+
+  user-microservice:
+    build:
+      context: .
+      dockerfile: apps/user/Dockerfile
+    container_name: x-clone-user
+    ports:
+      - '${USER_SERVICE_PORT}:${USER_SERVICE_PORT}'
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      PORT: ${USER_SERVICE_PORT}
+      DATABASE_USER_URL: ${DATABASE_USER_URL}
+      RABBITMQ_URL: amqp://${RABBITMQ_DEFAULT_USER}:${RABBITMQ_DEFAULT_PASS}@fucking-rabbitmq:${RABBITMQ_PORT}/
+      RABBITMQ_USER_QUEUE: user_queue
+    depends_on:
+      - fucking-postgres
+      - fucking-redis
+      - fucking-rabbitmq
+      - api-gateway
+    restart: unless-stopped
+
+  # twit-microservice:
+  #   build:
+  #     context: .
+  #     dockerfile: apps/twit/Dockerfile
+  #   container_name: x-clone-twit
+  #   ports:
+  #     - '${TWIT_SERVICE_PORT}:${TWIT_SERVICE_PORT}'
+  #   environment:
+  #     NODE_ENV: ${NODE_ENV:-production}
+  #     PORT: ${TWIT_SERVICE_PORT}
+  #     DATABASE_TWIT_URL: ${DATABASE_TWIT_URL}
+  #     RABBITMQ_URL: amqp://${RABBITMQ_DEFAULT_USER}:${RABBITMQ_DEFAULT_PASS}@fucking-rabbitmq:${RABBITMQ_PORT}/
+  #     RABBITMQ_TWIT_QUEUE: twit_queue
+  #   depends_on:
+  #     - fucking-postgres
+  #     - fucking-redis
+  #     - fucking-rabbitmq
+  #     - api-gateway
+  #   restart: unless-stopped
+
+  # notification-microservice:
+  #   build:
+  #     context: .
+  #     dockerfile: apps/notification/Dockerfile
+  #   container_name: x-clone-notification
+  #   ports:
+  #     - '${NOTIFICATION_SERVICE_PORT}:${NOTIFICATION_SERVICE_PORT}'
+  #   environment:
+  #     NODE_ENV: ${NODE_ENV:-production}
+  #     PORT: ${NOTIFICATION_SERVICE_PORT}
+  #     DATABASE_NOTIFICATION_URL: ${DATABASE_NOTIFICATION_URL}
+  #     RABBITMQ_URL: amqp://${RABBITMQ_DEFAULT_USER}:${RABBITMQ_DEFAULT_PASS}@fucking-rabbitmq:${RABBITMQ_PORT}/
+  #     RABBITMQ_NOTIFICATION_QUEUE: notification_queue
+  #   depends_on:
+  #     - fucking-postgres
+  #     - fucking-redis
+  #     - fucking-rabbitmq
+  #     - api-gateway
+  #   restart: unless-stopped
+
+  fucking-adminer:
     image: adminer
     container_name: twitter_adminer
     restart: always
     ports:
-      - '${ADMINER_PORT}:8080'
+      - '${ADMINER_PORT}:${ADMINER_PORT}'
 
 volumes:
   postgres_data:

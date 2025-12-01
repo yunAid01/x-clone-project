@@ -39,6 +39,9 @@ export class RmqModule {
               options: {
                 urls: [configService.get('RABBITMQ_URL')],
                 queue: configService.get(`RABBITMQ_${name}_QUEUE`),
+                queueOptions: {
+                  durable: true,
+                },
               },
             }),
             inject: [ConfigService],
