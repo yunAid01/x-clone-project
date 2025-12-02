@@ -11,6 +11,7 @@ import { RmqModule } from '@repo/common';
 // validation zod pipe
 import { ZodSerializerInterceptor, ZodValidationPipe } from 'nestjs-zod';
 import { APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
+import { UserController } from './user/user.controller';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -38,12 +39,12 @@ import { APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
         store: redisStore,
         host: configService.get('REDIS_HOST'),
         port: configService.get('REDIS_PORT'),
-        ttl: 600, // 캐시 유지 시간 (초 단위)
+        ttl: 60000, // 기본값: 60초
       }),
       inject: [ConfigService],
     }),
   ],
-  controllers: [AuthController],
+  controllers: [AuthController, UserController],
   providers: [
     JwtStrategy,
     {

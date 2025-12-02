@@ -21,7 +21,6 @@ export class UserController {
   @EventPattern('user.created')
   async createUserProfile(@Payload() data: any, @Ctx() context: RmqContext) {
     try {
-      console.log('🚀 [User] 이벤트 수신완료..');
       await this.userService.createUserProfile(data);
       this.logger.log(`✅ 프로필 생성 완료! User ID: ${data.userId}`);
       this.rmqService.ack(context); // 성공 시 ACK 전송
@@ -32,23 +31,81 @@ export class UserController {
     }
   }
 
-  @MessagePattern({ cmd: 'getUser' })
-  getUserProfile(@Payload() id: string) {
-    return this.userService.getUserProfile(id);
+  @MessagePattern('getAllUsers')
+  async getAllUsers(@Ctx() context: RmqContext) {
+    try {
+      const users = await this.userService.getAllUsers();
+      this.logger.log(`✅ 모든 사용자 프로필 조회 완료!`);
+      this.rmqService.ack(context); // 성공 시 ACK 전송
+      return users;
+    } catch (error) {
+      this.logger.error(error);
+      this.rmqService.ack(context); // 오류가 나도 로그만 남기고 ACK를 보내서 메시지 재처리를 막음
+    }
   }
 
-  @MessagePattern({ cmd: 'updateUser' })
+  @MessagePattern('getUser')
+  async getUserProfile(
+    @Payload() data: { id: string },
+    @Ctx() context: RmqContext,
+  ) {
+    try {
+      const user = await this.userService.getUserProfile(data.id);
+      this.logger.log(`✅ 사용자 프로필 조회 완료! User ID: ${data.id}`);
+      this.rmqService.ack(context); // 성공 시 ACK 전송
+      return user;
+    } catch (error) {
+      this.logger.error(error);
+      this.rmqService.ack(context); // 오류가 나도 로그만 남기고 ACK를 보내서 메시지 재처리를 막음
+    }
+  }
+
+  @MessagePattern('updateUser')
   updateUser(@Payload() data: any) {
     return this.userService.updateUserProfile(data);
   }
 
-  @MessagePattern({ cmd: 'followUser' })
-  followUser(@Payload() data: any) {
-    return this.userService.followUser(data.userId, data.targetUserId);
+  @MessagePattern('followUser')
+  async followUser(
+    @Payload() data: { userId: string; targetUserId: string },
+    @Ctx() context: RmqContext,
+  ) {
+    try {
+      const result = await this.userService.followUser(
+        data.userId,
+        data.targetUserId,
+      );
+      this.logger.log(
+        `✅ User ID: ${data.userId} 가 User ID: ${data.targetUserId} 를 팔로우했습니다.`,
+      );
+      this.rmqService.ack(context);
+      return result;
+    } catch (error) {
+      this.logger.error(error);
+      this.rmqService.ack(context);
+      throw error;
+    }
   }
 
-  @MessagePattern({ cmd: 'unfollowUser' })
-  unfollowUser(@Payload() data: any) {
-    return this.userService.unfollowUser(data.userId, data.targetUserId);
+  @MessagePattern('unfollowUser')
+  async unfollowUser(
+    @Payload() data: { userId: string; targetUserId: string },
+    @Ctx() context: RmqContext,
+  ) {
+    try {
+      const result = await this.userService.unfollowUser(
+        data.userId,
+        data.targetUserId,
+      );
+      this.logger.log(
+        `✅ User ID: ${data.userId} 가 User ID: ${data.targetUserId} 를 언팔로우했습니다.`,
+      );
+      this.rmqService.ack(context);
+      return result;
+    } catch (error) {
+      this.logger.error(error);
+      this.rmqService.ack(context);
+      throw error;
+    }
   }
 }

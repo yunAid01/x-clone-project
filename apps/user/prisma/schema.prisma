@@ -31,8 +31,8 @@ model Follow {
   followingId String      // 팔로우 당하는 사람
   createdAt   DateTime    @default(now())
 
-  follower    UserProfile @relation("UserFollows", fields: [followerId], references: [id])
-  following   UserProfile @relation("UserFollowedBy", fields: [followingId], references: [id])
+  follower    UserProfile @relation("UserFollows", fields: [followerId], references: [userId])
+  following   UserProfile @relation("UserFollowedBy", fields: [followingId], references: [userId])
   
   @@unique([followerId, followingId]) // 중복 팔로우 방지
 }

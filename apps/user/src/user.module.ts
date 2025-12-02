@@ -5,6 +5,8 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { PrismaModule } from './prisma/prisma.module';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { RmqModule } from '@repo/common';
+import { UserProfileRepository } from './userprofile.reposigory';
+import { UserFollowRepository } from './userfollow.repository';
 
 @Module({
   imports: [
@@ -26,6 +28,6 @@ import { RmqModule } from '@repo/common';
     PrismaModule,
   ],
   controllers: [UserController],
-  providers: [UserService],
+  providers: [UserService, UserProfileRepository, UserFollowRepository],
 })
 export class UserModule {}

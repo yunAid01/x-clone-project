@@ -3,7 +3,6 @@ import { UserModule } from './user.module';
 import { ConfigService } from '@nestjs/config';
 import { RmqService } from '@repo/common';
 import { setupRabbitMQ, RABBITMQ_EXCHANGE } from '@repo/common';
-// 🐰 RabbitMQ 설정을 강제로 맞춰주는 함수
 
 async function bootstrap() {
   // 1. 하이브리드 앱 패턴 사용
@@ -27,8 +26,7 @@ async function bootstrap() {
   // 4. 마이크로서비스 연결 (RmqService 활용)
   // 'USER'를 넣으면 내부적으로 RABBITMQ_USER_QUEUE 환경변수 값을 큐 이름으로 사용합니다.
   // noAck: false로 설정하여 수동 ACK 모드를 사용합니다 (안정성 확보).
-  app.connectMicroservice(rmqService.getOptions('USER', false));
-
+  await app.connectMicroservice(rmqService.getOptions('USER', false));
   await app.startAllMicroservices();
 
   // 5. HTTP 서버 시작 (헬스 체크 등을 위해 필요)

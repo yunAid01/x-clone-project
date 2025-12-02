@@ -2,50 +2,59 @@ import {
   BadRequestException,
   Injectable,
   InternalServerErrorException,
+  Logger,
 } from '@nestjs/common';
-import { PrismaService } from './prisma/prisma.service';
-
+import { UserProfileRepository } from './userprofile.reposigory';
+import { UserFollowRepository } from './userfollow.repository';
+import { toRpcException } from '@repo/common';
 @Injectable()
 export class UserService {
-  constructor(private readonly prisma: PrismaService) {}
+  private readonly logger = new Logger(UserService.name);
 
+  constructor(
+    private readonly userProfileRepository: UserProfileRepository,
+    private readonly userFollowRepository: UserFollowRepository,
+  ) {}
+
+  @toRpcException()
   async createUserProfile(data: any) {
     const { userId, email, nickname } = data;
-    try {
-      const userProfile = await this.prisma.userProfile.create({
-        data: {
-          userId: userId,
-          email: email,
-          nickname: nickname,
-        },
-      });
-      console.log(`✅ [User] 프로필 생성 완료!`);
-      return userProfile;
-    } catch (error) {
-      console.error('❌ [User] 프로필 생성 실패:', error);
-      throw new InternalServerErrorException('User profile creation failed');
-    }
+    const newUserProfile = await this.userProfileRepository.create({
+      userId: userId,
+      email: email,
+      nickname: nickname,
+    });
+    return newUserProfile;
   }
 
+  @toRpcException()
+  async getAllUsers() {
+    const userProfiles = await this.userProfileRepository.find({});
+    return userProfiles;
+  }
+
+  @toRpcException()
   async getUserProfile(id: string) {
-    const userProfile = await this.prisma.userProfile.findUnique({
-      where: { id: id },
+    const userProfile = await this.userProfileRepository.findOne({
+      id: id,
     });
     return userProfile;
   }
 
+  @toRpcException()
   async updateUserProfile(data: any) {
     const { id, ...updateData } = data;
-    const updatedUser = await this.prisma.userProfile.update({
-      where: { id: id },
-      data: updateData,
-    });
+    const updatedUser = await this.userProfileRepository.findOneAndUpdate(
+      { id: id },
+      updateData,
+    );
     return updatedUser;
   }
 
+  @toRpcException()
   async followUser(userId: string, targetUserId: string) {
-    const targetUser = await this.prisma.userProfile.findUnique({
-      where: { id: targetUserId },
+    const targetUser = await this.userProfileRepository.findOne({
+      userId: targetUserId,
     });
     if (!targetUser) {
       throw new BadRequestException('Target user does not exist');
@@ -53,33 +62,21 @@ export class UserService {
     if (userId === targetUserId) {
       throw new BadRequestException('Cannot follow yourself');
     }
-    const existingFollow = await this.prisma.follow.findUnique({
-      where: {
-        followerId_followingId: {
-          followerId: userId,
-          followingId: targetUserId,
-        },
-      },
-    });
+    const existingFollow = await this.userFollowRepository.isFollowing(
+      userId,
+      targetUserId,
+    );
     if (existingFollow) {
       throw new BadRequestException('Already following this user');
     }
-    try {
-      await this.prisma.follow.create({
-        data: {
-          followerId: userId,
-          followingId: targetUserId,
-        },
-      });
-      return { message: 'Follow success' };
-    } catch (error) {
-      throw new InternalServerErrorException('follow failed');
-    }
+    await this.userFollowRepository.followUser(userId, targetUserId);
+    return { message: 'Follow success' };
   }
 
+  @toRpcException()
   async unfollowUser(userId: string, targetUserId: string) {
-    const targetUser = await this.prisma.userProfile.findUnique({
-      where: { id: targetUserId },
+    const targetUser = await this.userProfileRepository.findOne({
+      userId: targetUserId,
     });
     if (!targetUser) {
       throw new BadRequestException('Target user does not exist');
@@ -87,29 +84,14 @@ export class UserService {
     if (userId === targetUserId) {
       throw new BadRequestException('Cannot follow yourself');
     }
-    const existingFollow = await this.prisma.follow.findUnique({
-      where: {
-        followerId_followingId: {
-          followerId: userId,
-          followingId: targetUserId,
-        },
-      },
-    });
+    const existingFollow = await this.userFollowRepository.isFollowing(
+      userId,
+      targetUserId,
+    );
     if (!existingFollow) {
       throw new BadRequestException('Not following this user');
     }
-    try {
-      await this.prisma.follow.delete({
-        where: {
-          followerId_followingId: {
-            followerId: userId,
-            followingId: targetUserId,
-          },
-        },
-      });
-      return { message: 'Unfollow success' };
-    } catch (error) {
-      throw new InternalServerErrorException('unfollow failed');
-    }
+    await this.userFollowRepository.unfollowUser(userId, targetUserId);
+    return { message: 'Unfollow success' };
   }
 }
