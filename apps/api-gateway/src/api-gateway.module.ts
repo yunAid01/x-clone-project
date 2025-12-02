@@ -36,7 +36,7 @@ import { APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
         store: redisStore,
-        host: 'localhost',
+        host: configService.get('REDIS_HOST'),
         port: configService.get('REDIS_PORT'),
         ttl: 600, // 캐시 유지 시간 (초 단위)
       }),
