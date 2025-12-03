@@ -12,11 +12,13 @@ import { RmqModule } from '@repo/common';
         const env = process.env.NODE_ENV;
         switch (env) {
           case 'local':
-            return ['../../.env'];
+            return ['../../.env.local'];
           case 'test':
             return ['../../.env.test'];
+          case 'production':
+            return ['../../.env.production'];
           default:
-            return ['../../.env'];
+            return ['../../.env.local'];
         }
       })(),
     }),

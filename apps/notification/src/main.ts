@@ -13,6 +13,7 @@ async function bootstrap() {
 
   const rmqService = app.get<RmqService>(RmqService);
   const configService = app.get<ConfigService>(ConfigService);
+  const port = configService.get('NOTIFICATION_SERVICE_PORT');
 
   // 2. 환경변수 가져오기
   const RMQ_URL = configService.get('RABBITMQ_URL');
@@ -31,9 +32,9 @@ async function bootstrap() {
   await app.startAllMicroservices();
 
   // 5. HTTP 서버 시작 (헬스 체크 등을 위해 필요)
-  await app.listen(4040);
+  await app.listen(port);
   console.log(
-    `🚀 [Notification] 서비스가 실행되었습니다! (Queue: ${QUEUE_NAME})`,
+    `🚀port:${port} [Notification] 서비스가 실행되었습니다! (Queue: ${QUEUE_NAME})`,
   );
 }
 bootstrap();

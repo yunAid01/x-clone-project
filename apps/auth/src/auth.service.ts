@@ -28,7 +28,7 @@ export class AuthService {
     const { email, password, name } = data;
     const existingUser = await this.authRepository.findByEmail(email);
     if (existingUser) {
-      this.logger.warn(`Attempt to register with existing email: ${email}`);
+      this.logger.debug(`Attempt to register with existing email: ${email}`);
       throw new BadRequestException('register Error: Email already in use');
     }
     const hashedPassword = await bcrypt.hash(password, 10);

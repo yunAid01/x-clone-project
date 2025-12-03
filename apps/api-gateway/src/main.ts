@@ -10,7 +10,7 @@ async function bootstrap() {
   const app = await NestFactory.create(ApiGateWayModule);
 
   const configService = app.get(ConfigService);
-  const port = configService.get('PORT');
+  const port = configService.get('API_GATEWAY_PORT');
   const corsOrigin = configService.get('CORS_ORIGIN');
 
   app.enableCors({ origin: corsOrigin });

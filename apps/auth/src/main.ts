@@ -2,7 +2,11 @@ import { NestFactory } from '@nestjs/core';
 import { AuthModule } from './auth.module';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { ConfigService } from '@nestjs/config';
-import { FitRpcExceptionFilter, RmqService } from '@repo/common';
+import {
+  FitRpcExceptionFilter,
+  RmqService,
+  RABBITMQ_EXCHANGE,
+} from '@repo/common';
 import { setupRabbitMQ } from '@repo/common';
 // 🐰 RabbitMQ 설정을 강제로 맞춰주는 함수
 
@@ -14,16 +18,16 @@ async function bootstrap() {
 
   const rmqService = app.get<RmqService>(RmqService);
   const configService = app.get<ConfigService>(ConfigService);
+  const port = configService.get('AUTH_SERVICE_PORT');
 
   // 2. 환경변수 가져오기
   const RMQ_URL = configService.get('RABBITMQ_URL');
   // RmqService는 'RABBITMQ_AUTH_QUEUE' 환경변수를 찾으므로, 여기서도 맞춰줍니다.
   const QUEUE_NAME = configService.get('RABBITMQ_AUTH_QUEUE');
-  const EXCHANGE_NAME = 'x_clone_exchange';
   const ROUTING_KEY = 'auth.#';
 
   // 3. 서버 시작 전 바인딩 수행
-  await setupRabbitMQ(RMQ_URL, QUEUE_NAME, EXCHANGE_NAME, ROUTING_KEY);
+  await setupRabbitMQ(RMQ_URL, QUEUE_NAME, RABBITMQ_EXCHANGE, ROUTING_KEY);
 
   // 4. 마이크로서비스 연결 (RmqService 활용)
   // 'AUTH'를 넣으면 내부적으로 RABBITMQ_AUTH_QUEUE 환경변수 값을 큐 이름으로 사용합니다.
@@ -33,7 +37,9 @@ async function bootstrap() {
   await app.startAllMicroservices();
 
   // 5. HTTP 서버 시작 (헬스 체크 등을 위해 필요)
-  await app.listen(4010);
-  console.log(`🚀 [Auth] 서비스가 실행되었습니다! (Queue: ${QUEUE_NAME})`);
+  await app.listen(port);
+  console.log(
+    `🚀port:${port} [Auth] 서비스가 실행되었습니다! (Queue: ${QUEUE_NAME})`,
+  );
 }
 bootstrap();

@@ -1,7 +1,7 @@
 services:
   postgres:
     image: postgres:15-alpine
-    container_name: test_twitter_postgres
+    container_name: local_twitter_postgres
     ports:
       - '${POSTGRES_PORT}:5432'
     environment:
@@ -9,13 +9,12 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
     volumes:
-      - test_postgres_data:/var/lib/postgresql/data
-      - ./init-test-db.sql:/docker-entrypoint-initdb.d/init-test-db.sql
-
+      - local_postgres_data:/var/lib/postgresql/data
+      - ./init-local-db.sql:/docker-entrypoint-initdb.d/init-local-db.sql
   # 빠른 저장소 (Redis)
   redis:
     image: redis:alpine
-    container_name: test_twitter_redis
+    container_name: local_twitter_redis
     ports:
       - '${REDIS_PORT}:6379'
     command: redis-server --save 20 1 --loglevel warning
@@ -23,20 +22,21 @@ services:
   # 메시지 큐 (RabbitMQ)
   rabbitmq:
     image: rabbitmq:3-management-alpine
-    container_name: test_twitter_rabbitmq
+    container_name: local_twitter_rabbitmq
     ports:
       - '${RABBITMQ_PORT}:5672' # 서비스들이 통신하는 포트
       - '${RABBITMQ_MANAGEMENT_PORT}:15672' # 우리가 눈으로 보는 관리자 웹 페이지 포트
     environment:
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
+
   # (선택사항) DB를 쉽게 눈으로 보는 도구 (Adminer)
   adminer:
     image: adminer
-    container_name: test_twitter_adminer
+    container_name: local_twitter_adminer
     restart: always
     ports:
       - '${ADMINER_PORT}:8080'
 
 volumes:
-  test_postgres_data:
+  local_postgres_data:

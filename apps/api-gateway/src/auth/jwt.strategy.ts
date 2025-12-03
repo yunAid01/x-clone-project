@@ -13,15 +13,15 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     }
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-      ignoreExpiration: false,
-      secretOrKey: jwtSecretKey,
+      ignoreExpiration: true, // 토큰 만료 무시
+      secretOrKey: jwtSecretKey, // 환경 변수에서 비밀 키 가져오기
     });
   }
 
   // 토큰 검증 성공하면 이 함수가 실행됨
-  async validate(payload: any) {
-    // payload에는 { userId: 1, email: '...' } 같은 게 들어있음
+  async validate(payload: { userId: string; email: string }) {
+    // payload에는 { userId: 'esejia-zjdfwiejf-djkr...', email: '...' } 같은 게 들어있음
     return { userId: payload.userId, email: payload.email };
-    // 리턴된 값은 request.user 에 자동으로 꽂힘! ✨
+    // 리턴된 값은 request.user
   }
 }
