@@ -37,7 +37,6 @@ export class AuthService {
       password: hashedPassword,
       name,
       role: 'USER', // default
-      createdAt: new Date(),
     });
     this.publisher.publish('user.created', {
       userId: newUser.id,

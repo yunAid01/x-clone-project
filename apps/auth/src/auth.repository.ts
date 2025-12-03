@@ -11,7 +11,7 @@ export class AuthRepository extends AbstractRepository<User> {
     super();
   }
 
-  async create(data: Omit<User, 'id'>): Promise<User> {
+  async create(data: Omit<User, 'id' | 'createdAt'>): Promise<User> {
     try {
       const newUser = await this.prisma.user.create({
         data: data as Prisma.UserCreateInput,

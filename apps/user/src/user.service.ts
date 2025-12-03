@@ -82,7 +82,7 @@ export class UserService {
       throw new BadRequestException('Target user does not exist');
     }
     if (userId === targetUserId) {
-      throw new BadRequestException('Cannot follow yourself');
+      throw new BadRequestException('Cannot unfollow yourself');
     }
     const existingFollow = await this.userFollowRepository.isFollowing(
       userId,

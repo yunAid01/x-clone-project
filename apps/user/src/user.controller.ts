@@ -19,7 +19,10 @@ export class UserController {
   ) {}
 
   @EventPattern('user.created')
-  async createUserProfile(@Payload() data: any, @Ctx() context: RmqContext) {
+  async createUserProfile(
+    @Payload() data: { userId: string; nickname: string; email: string },
+    @Ctx() context: RmqContext,
+  ) {
     try {
       await this.userService.createUserProfile(data);
       this.logger.log(`✅ 프로필 생성 완료! User ID: ${data.userId}`);
@@ -81,7 +84,7 @@ export class UserController {
       this.rmqService.ack(context);
       return result;
     } catch (error) {
-      this.logger.error(error);
+      this.logger.error(`follow 요청 실패: ${error.message}`);
       this.rmqService.ack(context);
       throw error;
     }
@@ -103,7 +106,7 @@ export class UserController {
       this.rmqService.ack(context);
       return result;
     } catch (error) {
-      this.logger.error(error);
+      this.logger.error(`unfollow 요청 실패: ${error.message}`);
       this.rmqService.ack(context);
       throw error;
     }

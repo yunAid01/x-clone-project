@@ -25,7 +25,10 @@ export class AuthController {
   ) {}
 
   @MessagePattern('register')
-  userRegister(@Payload() data: any, @Ctx() context: RmqContext) {
+  userRegister(
+    @Payload() data: { email: string; password: string; name: string },
+    @Ctx() context: RmqContext,
+  ) {
     this.logger.log(`🚀 [Auth] register 요청 수신: ${data.email}`);
     const result = this.authService.userRegister(data);
     this.rmqService.ack(context);
@@ -33,7 +36,10 @@ export class AuthController {
   }
 
   @MessagePattern('login')
-  userLogin(@Payload() data: any, @Ctx() context: RmqContext) {
+  userLogin(
+    @Payload() data: { email: string; password: string },
+    @Ctx() context: RmqContext,
+  ) {
     this.logger.log(`🚀 [Auth] login 요청 수신: ${data.email}`);
     const result = this.authService.userLogin(data);
     this.rmqService.ack(context);
