@@ -1,12 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { AuthController } from './auth.controller';
 import { ClientProxy } from '@nestjs/microservices';
-import { emit } from 'process';
+import { ClientProxyMock } from '@repo/tests';
 
-const mockClientProxy = {
-  send: jest.fn(),
-  emit: jest.fn(),
-};
 describe('AuthController', () => {
   let controller: AuthController;
   let authClient: ClientProxy;
@@ -16,8 +12,8 @@ describe('AuthController', () => {
       controllers: [AuthController],
       providers: [
         {
-          provide: 'AUTH_SERVICE', // @Inject('AUTH_SERVICE')와 이름이 같아야 함
-          useValue: mockClientProxy,
+          provide: 'AUTH', // @Inject('AUTH')와 이름이 같아야 함
+          useValue: ClientProxyMock,
         },
       ],
     }).compile();
@@ -32,31 +28,30 @@ describe('AuthController', () => {
 
   describe('register', () => {
     it('should send register queue to authMicroservice', async () => {
-      mockClientProxy.send = jest.fn().mockResolvedValue({
+      ClientProxyMock.send.mockResolvedValue({
         status: 201,
         message: 'successfully registered',
       });
       const registerData = {
         email: 'test@example.com',
         password: '1234',
-        name: 'Test User',
+        nickname: 'Test User',
       };
       const result = await controller.userRegister(registerData);
       expect(result).toEqual({
         status: 201,
         message: 'successfully registered',
       });
-      expect(authClient.send).toHaveBeenCalledWith(
-        { cmd: 'register' },
-        { ...registerData },
-      );
+      expect(authClient.send).toHaveBeenCalledWith('register', {
+        ...registerData,
+      });
     });
   });
 
   describe('login', () => {
     it('should send login queue to authMicroservice', async () => {
       expect(controller).toBeDefined();
-      mockClientProxy.send = jest.fn().mockResolvedValue({
+      ClientProxyMock.send.mockResolvedValue({
         status: 200,
         message: 'successfully logged in',
         token: 'fake-jwt-token',
@@ -81,10 +76,7 @@ describe('AuthController', () => {
           name: 'Test User',
         },
       });
-      expect(authClient.send).toHaveBeenCalledWith(
-        { cmd: 'login' },
-        { ...loginData },
-      );
+      expect(authClient.send).toHaveBeenCalledWith('login', { ...loginData });
     });
   });
 });

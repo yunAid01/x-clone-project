@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { TwitRepository } from './twit.repository';
 import { RmqPublisher, toRpcException } from '@repo/common';
 import { Logger } from '@nestjs/common';
-import { PrismaService } from './prisma/prisma.service';
+import { UserProfileRepository } from '../user-profile/user-profile.repository';
+import { TwitRepository } from './twit.repository';
 
 @Injectable()
 export class TwitService {
@@ -10,6 +10,7 @@ export class TwitService {
 
   constructor(
     private readonly twitRepository: TwitRepository,
+    private readonly userProfileRepository: UserProfileRepository,
     private readonly publisher: RmqPublisher,
   ) {}
 
@@ -20,7 +21,7 @@ export class TwitService {
 
   @toRpcException()
   async createTwit(content: string, userId: string) {
-    const user = await this.twitRepository.findUserProfile(userId);
+    const user = await this.userProfileRepository.findUserProfile(userId);
     const newTwit = await this.twitRepository.create({
       authorId: userId,
       content: content,
@@ -28,20 +29,5 @@ export class TwitService {
       authorNickname: user.nickname,
     });
     return newTwit;
-  }
-
-  async duplicateUserProfile(data: {
-    userId: string;
-    email: string;
-    nickname: string;
-  }) {
-    await this.twitRepository.duplicateUserProfile({
-      userId: data.userId,
-      email: data.email,
-      nickname: data.nickname,
-    });
-    return {
-      message: 'User profile duplicated in Twit service',
-    };
   }
 }

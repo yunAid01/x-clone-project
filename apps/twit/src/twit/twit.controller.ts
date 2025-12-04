@@ -1,7 +1,6 @@
 import { Controller, Logger } from '@nestjs/common';
 import {
   Ctx,
-  EventPattern,
   MessagePattern,
   Payload,
   RmqContext,
@@ -18,23 +17,6 @@ export class TwitController {
     private readonly rmqService: RmqService,
   ) {}
 
-  @EventPattern('user.created')
-  async duplicateUserProfile(
-    @Payload() data: { userId: string; email: string; nickname: string },
-    @Ctx() context: RmqContext,
-  ) {
-    try {
-      this.logger.log(
-        `[Twit] 새 사용자 프로필 복제: nickname: ${data.nickname} id: (${data.userId})`,
-      );
-      await this.twitService.duplicateUserProfile(data);
-      this.rmqService.ack(context);
-    } catch (error) {
-      this.logger.error('UserProfile 생성 실패:', error);
-      this.rmqService.ack(context);
-    }
-  }
-
   @MessagePattern('getTwits')
   async getTwits(@Ctx() context: RmqContext) {
     try {
@@ -44,7 +26,7 @@ export class TwitController {
       return twits;
     } catch (error) {
       this.logger.error(error);
-      this.rmqService.ack(context); // 오류가 나도 로그만 남기고 ACK를 보내서 메시지 재처리를 막음
+      this.rmqService.ack(context);
     }
   }
 
@@ -64,7 +46,7 @@ export class TwitController {
       return newTwit;
     } catch (error) {
       this.logger.error(error);
-      this.rmqService.ack(context); // 오류가 나도 로그만 남기고 ACK를 보내서 메시지 재처리를 막음
+      this.rmqService.ack(context);
     }
   }
 }

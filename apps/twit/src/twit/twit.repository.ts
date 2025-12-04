@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { AbstractRepository, PRISMA_ERRORS } from '@repo/common';
-import { PrismaService } from './prisma/prisma.service';
-import { Twit, Prisma, UserProfile } from '@prisma/client-twit';
+import { PrismaService } from '../prisma/prisma.service';
+import { Twit, Prisma } from '@prisma/client-twit';
 
 @Injectable()
 export class TwitRepository extends AbstractRepository<Twit> {
@@ -61,34 +61,5 @@ export class TwitRepository extends AbstractRepository<Twit> {
 
   async find(filterQuery: Prisma.TwitWhereInput): Promise<Twit[]> {
     return this.prisma.twit.findMany({ where: filterQuery });
-  }
-
-  async duplicateUserProfile(data: {
-    userId: string;
-    email: string;
-    nickname: string;
-  }) {
-    return this.prisma.userProfile.create({
-      data: {
-        userId: data.userId,
-        email: data.email,
-        nickname: data.nickname,
-      },
-    });
-  }
-
-  async findUserProfile(userId: string): Promise<UserProfile> {
-    try {
-      const user = await this.prisma.userProfile.findUnique({
-        where: { userId },
-      });
-      return user as UserProfile;
-    } catch (error: any) {
-      if (error.code === PRISMA_ERRORS.RECORD_NOT_FOUND) {
-        this.logger.error(`Error finding user profile: ${error.message}`);
-        this.ensureExists(null, 'UserProfile');
-      }
-      throw error;
-    }
   }
 }

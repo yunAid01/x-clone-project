@@ -1,5 +1,5 @@
 import { NestFactory } from '@nestjs/core';
-import { TwitModule } from './twit.module';
+import { TwitMicroModule } from './twit-micro.module';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { ConfigService } from '@nestjs/config';
 import { RmqService } from '@repo/common';
@@ -7,7 +7,7 @@ import { setupRabbitMQ } from '@repo/common';
 import { RABBITMQ_EXCHANGE } from '@repo/common';
 
 async function bootstrap() {
-  const app = await NestFactory.create(TwitModule);
+  const app = await NestFactory.create(TwitMicroModule);
 
   const rmqService = app.get<RmqService>(RmqService);
   const configService = app.get<ConfigService>(ConfigService);
@@ -15,9 +15,11 @@ async function bootstrap() {
 
   const RMQ_URL = configService.get('RABBITMQ_URL');
   const QUEUE_NAME = configService.get('RABBITMQ_TWIT_QUEUE');
-  const ROUTING_KEY = 'user.#';
+  const ROUTING_KEY_USER = 'user.#';
+  const ROUTING_KEY_TWIT = 'twit.#';
 
-  await setupRabbitMQ(RMQ_URL, QUEUE_NAME, RABBITMQ_EXCHANGE, ROUTING_KEY);
+  await setupRabbitMQ(RMQ_URL, QUEUE_NAME, RABBITMQ_EXCHANGE, ROUTING_KEY_TWIT);
+  await setupRabbitMQ(RMQ_URL, QUEUE_NAME, RABBITMQ_EXCHANGE, ROUTING_KEY_USER);
 
   // 'TWIT'를 넣으면 내부적으로 RABBITMQ_TWIT_QUEUE 환경변수 값을 큐 이름으로 사용합니다.
   // noAck: false로 설정하여 수동 ACK 모드를 사용합니다 (안정성 확보).
