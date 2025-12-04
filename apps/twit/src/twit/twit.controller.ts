@@ -17,6 +17,22 @@ export class TwitController {
     private readonly rmqService: RmqService,
   ) {}
 
+  @MessagePattern('getTwit')
+  async getTwitDetail(
+    @Ctx() context: RmqContext,
+    @Payload() data: { twitId: string },
+  ) {
+    try {
+      this.logger.log(`🐦 [Twits] 트윗 상세 요청받음: ${data.twitId}`);
+      const twit = await this.twitService.getTwitById(data.twitId);
+      this.rmqService.ack(context);
+      return twit;
+    } catch (error) {
+      this.logger.error(error);
+      this.rmqService.ack(context);
+    }
+  }
+
   @MessagePattern('getTwits')
   async getTwits(@Ctx() context: RmqContext) {
     try {

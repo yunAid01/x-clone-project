@@ -8,6 +8,7 @@ import {
   Get,
   Logger,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { User } from '@repo/common';
@@ -16,6 +17,7 @@ import { User } from '@repo/common';
 import { RegisterDto, LoginDto } from '../dtos/auth.dto';
 import { ZodResponse } from 'nestjs-zod';
 import { AuthGuard } from '@nestjs/passport';
+import { CacheInterceptor } from '@nestjs/cache-manager';
 
 @UseGuards(AuthGuard('jwt'))
 @Controller('twit')
@@ -25,9 +27,17 @@ export class TwitController {
   constructor(@Inject('TWIT') private readonly twitClient: ClientProxy) {}
 
   @Get()
+  @UseInterceptors(CacheInterceptor)
   getTwits() {
     this.logger.log('🚀 [Gateway] Twit 서비스로 getTwits 신호를 보냅니다...');
     return this.twitClient.send('getTwits', {});
+  }
+
+  @Get(':twitId')
+  @UseInterceptors(CacheInterceptor)
+  getTwitDetail(@Body('twitId') twitId: string) {
+    this.logger.log('🚀 [Gateway] Twit 서비스로 getTwit 신호를 보냅니다...');
+    return this.twitClient.send('getTwit', { twitId });
   }
 
   @Post()

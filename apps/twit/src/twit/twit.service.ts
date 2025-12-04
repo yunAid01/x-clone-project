@@ -14,6 +14,13 @@ export class TwitService {
     private readonly publisher: RmqPublisher,
   ) {}
 
+  @toRpcException()
+  async getTwitById(twitId: string) {
+    const twit = await this.twitRepository.findOne({ id: twitId });
+    return twit;
+  }
+
+  @toRpcException()
   async getTwits() {
     const twits = await this.twitRepository.find({});
     return twits;
