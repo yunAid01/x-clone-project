@@ -9,6 +9,7 @@ import {
   Logger,
   UseGuards,
   UseInterceptors,
+  Param,
 } from '@nestjs/common';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { User } from '@repo/common';
@@ -18,6 +19,8 @@ import { RegisterDto, LoginDto } from '../dtos/auth.dto';
 import { ZodResponse } from 'nestjs-zod';
 import { AuthGuard } from '@nestjs/passport';
 import { CacheInterceptor } from '@nestjs/cache-manager';
+import type { AuthenticatedUser } from '@repo/validation';
+import { CreateTwitDto } from '../dtos/twit,dto';
 
 @UseGuards(AuthGuard('jwt'))
 @Controller('twit')
@@ -35,7 +38,7 @@ export class TwitController {
 
   @Get(':twitId')
   @UseInterceptors(CacheInterceptor)
-  getTwitDetail(@Body('twitId') twitId: string) {
+  getTwitDetail(@Param('twitId') twitId: string) {
     this.logger.log('🚀 [Gateway] Twit 서비스로 getTwit 신호를 보냅니다...');
     return this.twitClient.send('getTwit', { twitId });
   }
@@ -43,12 +46,9 @@ export class TwitController {
   @Post()
   createTwits(
     @Body()
-    createTwitData: {
-      content: string;
-    },
-    @User() user: { userId: string; email: string },
+    createTwitData: CreateTwitDto,
+    @User() user: AuthenticatedUser,
   ) {
-    this.logger.log(createTwitData.content, user);
     this.logger.log('🚀 [Gateway] Twit 서비스로 createTwit 신호를 보냅니다...');
     return this.twitClient.send('createTwit', {
       content: createTwitData.content,

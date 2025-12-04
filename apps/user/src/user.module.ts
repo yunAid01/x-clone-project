@@ -4,7 +4,7 @@ import { UserService } from './user.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { PrismaModule } from './prisma/prisma.module';
 import { ClientsModule, Transport } from '@nestjs/microservices';
-import { RmqModule } from '@repo/common';
+import { RmqModule, RmqPublisher } from '@repo/common';
 import { UserProfileRepository } from './userprofile.reposigory';
 import { UserFollowRepository } from './userfollow.repository';
 
@@ -30,6 +30,11 @@ import { UserFollowRepository } from './userfollow.repository';
     PrismaModule,
   ],
   controllers: [UserController],
-  providers: [UserService, UserProfileRepository, UserFollowRepository],
+  providers: [
+    UserService,
+    UserProfileRepository,
+    UserFollowRepository,
+    RmqPublisher,
+  ],
 })
 export class UserModule {}

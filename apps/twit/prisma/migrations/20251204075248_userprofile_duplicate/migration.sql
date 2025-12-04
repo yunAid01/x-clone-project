@@ -1,4 +1,4 @@
-/*
+y/*
   Warnings:
 
   - Made the column `authorAvatarUrl` on table `Comment` required. This step will fail if there are existing NULL values in that column.

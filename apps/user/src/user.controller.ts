@@ -1,4 +1,4 @@
-import { Controller, Logger } from '@nestjs/common';
+import { Controller, Logger, UseFilters } from '@nestjs/common';
 import { UserService } from './user.service';
 import {
   Ctx,
@@ -7,9 +7,15 @@ import {
   Payload,
   RmqContext,
 } from '@nestjs/microservices';
-import { RmqService } from '@repo/common';
+import {
+  FitRpcExceptionFilter,
+  RmqService,
+  toRpcException,
+} from '@repo/common';
+import type { RegisterDtoType } from '@repo/validation';
 
 @Controller()
+@UseFilters(new FitRpcExceptionFilter())
 export class UserController {
   private readonly logger = new Logger(UserController.name);
 
@@ -20,18 +26,17 @@ export class UserController {
 
   @EventPattern('user.created')
   async createUserProfile(
-    @Payload() data: { userId: string; nickname: string; email: string },
+    @Payload()
+    data: {
+      userId: string;
+      email: string;
+      nickname: string;
+    },
     @Ctx() context: RmqContext,
   ) {
-    try {
-      await this.userService.createUserProfile(data);
-      this.logger.log(`✅ 프로필 생성 완료! User ID: ${data.userId}`);
-      this.rmqService.ack(context); // 성공 시 ACK 전송
-    } catch (error) {
-      this.logger.error(error);
-      this.logger.error(`❌ 프로필 생성 실패! User ID: ${data.userId}`);
-      this.rmqService.ack(context); // 오류가 나도 로그만 남기고 ACK를 보내서 메시지 재처리를 막음
-    }
+    await this.userService.createUserProfile(data);
+    this.logger.log(`✅ 프로필 생성 완료! User ID: ${data.userId}`);
+    this.rmqService.ack(context); // 성공 시 ACK 전송
   }
 
   @MessagePattern('loginUserProfile')
@@ -39,51 +44,40 @@ export class UserController {
     @Payload() data: { userId: string },
     @Ctx() context: RmqContext,
   ) {
-    try {
-      const userProfile = await this.userService.getUserProfile(data.userId);
-      this.logger.log(
-        `✅ 로그인 사용자 프로필 조회 완료! User ID: ${data.userId}`,
-      );
-      this.rmqService.ack(context);
-      return userProfile;
-    } catch (error) {
-      this.logger.error(error);
-      this.rmqService.ack(context);
-    }
+    const userProfile = await this.userService.getUserProfile(data.userId);
+    this.logger.log(`✅ 로그인시 본인 프로필 조회 User ID: ${data.userId}`);
+    this.rmqService.ack(context);
+    return userProfile;
   }
 
   @MessagePattern('getAllUsers')
   async getAllUsers(@Ctx() context: RmqContext) {
-    try {
-      const users = await this.userService.getAllUsers();
-      this.logger.log(`✅ 모든 사용자 프로필 조회 완료!`);
-      this.rmqService.ack(context); // 성공 시 ACK 전송
-      return users;
-    } catch (error) {
-      this.logger.error(error);
-      this.rmqService.ack(context); // 오류가 나도 로그만 남기고 ACK를 보내서 메시지 재처리를 막음
-    }
+    const users = await this.userService.getAllUsers();
+    this.logger.log(`✅ 모든 사용자 프로필 조회 완료!`);
+    this.rmqService.ack(context);
+    return users;
   }
 
   @MessagePattern('getUser')
   async getUserProfile(
-    @Payload() data: { id: string },
+    @Payload() data: { userId: string },
     @Ctx() context: RmqContext,
   ) {
-    try {
-      const user = await this.userService.getUserProfile(data.id);
-      this.logger.log(`✅ 사용자 프로필 조회 완료! User ID: ${data.id}`);
-      this.rmqService.ack(context); // 성공 시 ACK 전송
-      return user;
-    } catch (error) {
-      this.logger.error(error);
-      this.rmqService.ack(context); // 오류가 나도 로그만 남기고 ACK를 보내서 메시지 재처리를 막음
-    }
+    const user = await this.userService.getUserProfile(data.userId);
+    this.logger.log(`✅ 사용자 프로필 조회 완료! User ID: ${data.userId}`);
+    this.rmqService.ack(context);
+    return user;
   }
 
   @MessagePattern('updateUser')
-  updateUser(@Payload() data: any) {
-    return this.userService.updateUserProfile(data);
+  async updateUser(@Payload() data: any, @Ctx() context: RmqContext) {
+    this.logger.log(`✅ 사용자 프로필 수정 요청: ${JSON.stringify(data)}`);
+    const result = await this.userService.updateUserProfile(
+      data.userId,
+      data.updateUserData,
+    );
+    this.rmqService.ack(context);
+    return result;
   }
 
   @MessagePattern('followUser')
@@ -91,21 +85,15 @@ export class UserController {
     @Payload() data: { userId: string; targetUserId: string },
     @Ctx() context: RmqContext,
   ) {
-    try {
-      const result = await this.userService.followUser(
-        data.userId,
-        data.targetUserId,
-      );
-      this.logger.log(
-        `✅ User ID: ${data.userId} 가 User ID: ${data.targetUserId} 를 팔로우했습니다.`,
-      );
-      this.rmqService.ack(context);
-      return result;
-    } catch (error) {
-      this.logger.error(`follow 요청 실패: ${error.message}`);
-      this.rmqService.ack(context);
-      throw error;
-    }
+    const result = await this.userService.followUser(
+      data.userId,
+      data.targetUserId,
+    );
+    this.logger.log(
+      `✅ User ID: ${data.userId} 가 User ID: ${data.targetUserId} 를 팔로우했습니다.`,
+    );
+    this.rmqService.ack(context);
+    return result;
   }
 
   @MessagePattern('unfollowUser')
@@ -113,20 +101,14 @@ export class UserController {
     @Payload() data: { userId: string; targetUserId: string },
     @Ctx() context: RmqContext,
   ) {
-    try {
-      const result = await this.userService.unfollowUser(
-        data.userId,
-        data.targetUserId,
-      );
-      this.logger.log(
-        `✅ User ID: ${data.userId} 가 User ID: ${data.targetUserId} 를 언팔로우했습니다.`,
-      );
-      this.rmqService.ack(context);
-      return result;
-    } catch (error) {
-      this.logger.error(`unfollow 요청 실패: ${error.message}`);
-      this.rmqService.ack(context);
-      throw error;
-    }
+    const result = await this.userService.unfollowUser(
+      data.userId,
+      data.targetUserId,
+    );
+    this.logger.log(
+      `✅ User ID: ${data.userId} 가 User ID: ${data.targetUserId} 를 언팔로우했습니다.`,
+    );
+    this.rmqService.ack(context);
+    return result;
   }
 }

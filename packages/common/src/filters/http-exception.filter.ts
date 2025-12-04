@@ -30,7 +30,13 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       } else {
         message = res;
       }
+    } else if (exception?.error && typeof exception.error === 'object') {
+      // RPC 에러 (exception.error.status, exception.error.message)
+      status = exception.error.status || HttpStatus.INTERNAL_SERVER_ERROR;
+      message = exception.error.message || 'Microservice Error';
+      error = 'Microservice Error';
     } else if (exception && exception.status) {
+      // 레거시 RPC 에러 (exception.status, exception.message)
       status = exception.status;
       message = exception.message;
       error = 'Microservice Error';

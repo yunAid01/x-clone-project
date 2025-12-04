@@ -1,5 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { AbstractRepository, PRISMA_ERRORS } from '@repo/common';
+import {
+  AbstractRepository,
+  PRISMA_ERRORS,
+  toRpcException,
+} from '@repo/common';
 import { PrismaService } from './prisma/prisma.service';
 import { User, Prisma } from '@prisma/client-auth';
 
@@ -27,11 +31,10 @@ export class AuthRepository extends AbstractRepository<User> {
   async findOne(filterQuery: Prisma.UserWhereInput): Promise<User> {
     try {
       const user = await this.prisma.user.findFirst({ where: filterQuery });
+      this.ensureExists(user, 'User');
       return user as User;
     } catch (error: any) {
-      console.error(error);
-      if (error.code === PRISMA_ERRORS.RECORD_NOT_FOUND)
-        this.ensureExists(null, 'User');
+      this.logger.error(error);
       throw error;
     }
   }
@@ -45,10 +48,10 @@ export class AuthRepository extends AbstractRepository<User> {
         where: filterQuery,
         data: update as Prisma.UserUpdateInput,
       });
+      this.ensureExists(user, 'User');
       return user;
     } catch (error: any) {
-      if (error.code === PRISMA_ERRORS.RECORD_NOT_FOUND)
-        this.ensureExists(null, 'User');
+      this.logger.error(error);
       throw error;
     }
   }

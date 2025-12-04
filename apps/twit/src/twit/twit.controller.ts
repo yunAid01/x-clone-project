@@ -1,14 +1,16 @@
-import { Controller, Logger } from '@nestjs/common';
+import { Controller, Logger, UseFilters } from '@nestjs/common';
 import {
   Ctx,
+  EventPattern,
   MessagePattern,
   Payload,
   RmqContext,
 } from '@nestjs/microservices';
 import { TwitService } from './twit.service';
-import { RmqService } from '@repo/common';
+import { FitRpcExceptionFilter, RmqService } from '@repo/common';
 
 @Controller()
+@UseFilters(new FitRpcExceptionFilter())
 export class TwitController {
   private readonly logger = new Logger(TwitController.name);
 
@@ -17,52 +19,46 @@ export class TwitController {
     private readonly rmqService: RmqService,
   ) {}
 
-  @MessagePattern('getTwit')
-  async getTwitDetail(
-    @Ctx() context: RmqContext,
-    @Payload() data: { twitId: string },
-  ) {
-    try {
-      this.logger.log(`🐦 [Twits] 트윗 상세 요청받음: ${data.twitId}`);
-      const twit = await this.twitService.getTwitById(data.twitId);
-      this.rmqService.ack(context);
-      return twit;
-    } catch (error) {
-      this.logger.error(error);
-      this.rmqService.ack(context);
-    }
-  }
-
-  @MessagePattern('getTwits')
-  async getTwits(@Ctx() context: RmqContext) {
-    try {
-      this.logger.log('🐦 [Twits] 트윗 목록 요청받음');
-      const twits = await this.twitService.getTwits();
-      this.rmqService.ack(context);
-      return twits;
-    } catch (error) {
-      this.logger.error(error);
-      this.rmqService.ack(context);
-    }
-  }
-
   @MessagePattern('createTwit')
   async createTwit(
     @Ctx() context: RmqContext,
     @Payload() data: { content: string; userId: string },
   ) {
-    try {
-      this.logger.log('🐦 [Twits] 트윗 생성 요청받음');
-      this.logger.log(`Content: ${data.content}, UserID: ${data.userId}`);
-      const newTwit = await this.twitService.createTwit(
-        data.content,
-        data.userId,
-      );
-      this.rmqService.ack(context);
-      return newTwit;
-    } catch (error) {
-      this.logger.error(error);
-      this.rmqService.ack(context);
-    }
+    this.logger.log('🐦 [Twits] 트윗 생성 요청받음');
+    this.logger.log(`Content: ${data.content}, UserID: ${data.userId}`);
+    const newTwit = await this.twitService.createTwit(
+      data.content,
+      data.userId,
+    );
+    this.rmqService.ack(context);
+    return newTwit;
+  }
+
+  @MessagePattern('getTwit')
+  async getTwitDetail(
+    @Ctx() context: RmqContext,
+    @Payload() data: { twitId: string },
+  ) {
+    this.logger.log(`🐦 [Twits] 트윗 상세 요청받음: ${data.twitId}`);
+    const twit = await this.twitService.getTwitById(data.twitId);
+    this.rmqService.ack(context);
+    return twit;
+  }
+
+  @MessagePattern('getTwits')
+  async getTwits(@Ctx() context: RmqContext) {
+    this.logger.log('🐦 [Twits] 트윗 목록 요청받음');
+    const twits = await this.twitService.getTwits();
+    this.rmqService.ack(context);
+    return twits;
+  }
+
+  @EventPattern('user.updated')
+  async handleUserUpdated(@Payload() data: any, @Ctx() context: RmqContext) {
+    this.logger.log(
+      `🐦 [Twits] 사용자 업데이트 이벤트 수신: ${JSON.stringify(data)}`,
+    );
+    this.twitService.updateAuthorInfoInTwits(data.userId, data);
+    this.rmqService.ack(context);
   }
 }

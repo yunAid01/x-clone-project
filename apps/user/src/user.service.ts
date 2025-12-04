@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { UserProfileRepository } from './userprofile.reposigory';
 import { UserFollowRepository } from './userfollow.repository';
-import { toRpcException } from '@repo/common';
+import { RmqPublisher, toRpcException } from '@repo/common';
 @Injectable()
 export class UserService {
   private readonly logger = new Logger(UserService.name);
@@ -14,9 +14,9 @@ export class UserService {
   constructor(
     private readonly userProfileRepository: UserProfileRepository,
     private readonly userFollowRepository: UserFollowRepository,
+    private readonly publisher: RmqPublisher,
   ) {}
 
-  @toRpcException()
   async createUserProfile(data: any) {
     const { userId, email, nickname } = data;
     const newUserProfile = await this.userProfileRepository.create({
@@ -27,13 +27,11 @@ export class UserService {
     return newUserProfile;
   }
 
-  @toRpcException()
   async getAllUsers() {
     const userProfiles = await this.userProfileRepository.find({});
     return userProfiles;
   }
 
-  @toRpcException()
   async getUserProfile(userId: string) {
     const userProfile = await this.userProfileRepository.findOne({
       userId: userId,
@@ -41,27 +39,38 @@ export class UserService {
     return userProfile;
   }
 
-  @toRpcException()
-  async updateUserProfile(data: any) {
-    const { id, ...updateData } = data;
+  async updateUserProfile(userId: string, updateUserData: any) {
     const updatedUser = await this.userProfileRepository.findOneAndUpdate(
-      { id: id },
-      updateData,
+      { userId: userId },
+      updateUserData,
     );
+    this.publisher.publish('user.updated', updatedUser);
     return updatedUser;
   }
 
-  @toRpcException()
   async followUser(userId: string, targetUserId: string) {
+    // 1. 팔로우하는 사람(자신)이 존재하는지 확인
+    const user = await this.userProfileRepository.findOne({
+      userId: userId,
+    });
+    if (!user) {
+      throw new BadRequestException('User profile does not exist');
+    }
+
+    // 2. 팔로우 대상이 존재하는지 확인
     const targetUser = await this.userProfileRepository.findOne({
       userId: targetUserId,
     });
     if (!targetUser) {
       throw new BadRequestException('Target user does not exist');
     }
+
+    // 3. 자기 자신을 팔로우하는지 확인
     if (userId === targetUserId) {
       throw new BadRequestException('Cannot follow yourself');
     }
+
+    // 4. 이미 팔로우 중인지 확인
     const existingFollow = await this.userFollowRepository.isFollowing(
       userId,
       targetUserId,
@@ -69,21 +78,34 @@ export class UserService {
     if (existingFollow) {
       throw new BadRequestException('Already following this user');
     }
+
     await this.userFollowRepository.followUser(userId, targetUserId);
     return { message: 'Follow success' };
   }
 
-  @toRpcException()
   async unfollowUser(userId: string, targetUserId: string) {
+    // 1. 언팔로우하는 사람(자신)이 존재하는지 확인
+    const user = await this.userProfileRepository.findOne({
+      userId: userId,
+    });
+    if (!user) {
+      throw new BadRequestException('User profile does not exist');
+    }
+
+    // 2. 언팔로우 대상이 존재하는지 확인
     const targetUser = await this.userProfileRepository.findOne({
       userId: targetUserId,
     });
     if (!targetUser) {
       throw new BadRequestException('Target user does not exist');
     }
+
+    // 3. 자기 자신을 언팔로우하는지 확인
     if (userId === targetUserId) {
       throw new BadRequestException('Cannot unfollow yourself');
     }
+
+    // 4. 팔로우 중인지 확인
     const existingFollow = await this.userFollowRepository.isFollowing(
       userId,
       targetUserId,
@@ -91,6 +113,7 @@ export class UserService {
     if (!existingFollow) {
       throw new BadRequestException('Not following this user');
     }
+
     await this.userFollowRepository.unfollowUser(userId, targetUserId);
     return { message: 'Unfollow success' };
   }

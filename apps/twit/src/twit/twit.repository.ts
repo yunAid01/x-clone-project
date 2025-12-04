@@ -32,12 +32,10 @@ export class TwitRepository extends AbstractRepository<Twit> {
   async findOne(filterQuery: Prisma.TwitWhereInput): Promise<Twit> {
     try {
       const twit = await this.prisma.twit.findFirst({ where: filterQuery });
+      this.ensureExists(twit, 'Twit');
       return twit as Twit;
     } catch (error: any) {
       this.logger.error(error);
-      if (error.code === PRISMA_ERRORS.RECORD_NOT_FOUND) {
-        this.ensureExists(null, 'Twit');
-      }
       throw error;
     }
   }
@@ -51,15 +49,27 @@ export class TwitRepository extends AbstractRepository<Twit> {
         where: filterQuery,
         data: updateData as Prisma.TwitUpdateInput,
       });
+      this.ensureExists(twit, 'Twit');
       return twit;
     } catch (error: any) {
-      if (error.code === PRISMA_ERRORS.RECORD_NOT_FOUND)
-        this.ensureExists(null, 'Twit');
+      this.logger.error(error);
       throw error;
     }
   }
 
   async find(filterQuery: Prisma.TwitWhereInput): Promise<Twit[]> {
     return this.prisma.twit.findMany({ where: filterQuery });
+  }
+
+  // custom
+  async updateMany(
+    filterQuery: Prisma.TwitWhereInput,
+    updateData: Prisma.TwitUpdateInput,
+  ): Promise<number> {
+    const result = await this.prisma.twit.updateMany({
+      where: filterQuery,
+      data: updateData,
+    });
+    return result.count;
   }
 }

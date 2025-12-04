@@ -26,7 +26,6 @@ export class AuthService {
     @Inject('USER') private readonly userClient: ClientProxy,
   ) {}
 
-  @toRpcException()
   async userRegister(data: any) {
     const { email, password, nickname } = data;
     const existingUser = await this.authRepository.findByEmail(email);
@@ -49,7 +48,6 @@ export class AuthService {
     return { statusCode: 201, message: 'successfully registered' };
   }
 
-  @toRpcException()
   async userLogin(data: any) {
     const { email, password } = data;
     const existingUser = await this.authRepository.findByEmail(email);

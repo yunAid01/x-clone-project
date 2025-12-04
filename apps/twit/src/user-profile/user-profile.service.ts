@@ -13,7 +13,7 @@ export class UserProfileService {
     email: string;
     nickname: string;
   }) {
-    await this.userProfileRepository.duplicateUserProfile({
+    await this.userProfileRepository.create({
       userId: data.userId,
       email: data.email,
       nickname: data.nickname,

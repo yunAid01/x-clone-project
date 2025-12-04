@@ -5,9 +5,9 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { PrismaModule } from './prisma/prisma.module';
 import { JwtModule } from '@nestjs/jwt';
 
-import { ClientsModule, Transport } from '@nestjs/microservices';
-import { RmqModule, RmqPublisher } from '@repo/common';
+import { FitRpcExceptionFilter, RmqModule, RmqPublisher } from '@repo/common';
 import { AuthRepository } from './auth.repository';
+import { APP_FILTER } from '@nestjs/core';
 
 @Module({
   imports: [
@@ -39,6 +39,11 @@ import { AuthRepository } from './auth.repository';
     PrismaModule,
   ],
   controllers: [AuthController],
-  providers: [AuthService, RmqPublisher, AuthRepository],
+  providers: [
+    AuthService,
+    RmqPublisher,
+    AuthRepository,
+    // APP_FILTER는 마이크로서비스에서 작동하지 않음 - main.ts에서 useGlobalFilters로 등록
+  ],
 })
 export class AuthModule {}

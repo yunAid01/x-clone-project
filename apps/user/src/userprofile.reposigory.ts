@@ -1,5 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { AbstractRepository, PRISMA_ERRORS } from '@repo/common';
+import {
+  AbstractRepository,
+  PRISMA_ERRORS,
+  toRpcException,
+} from '@repo/common';
 import { PrismaService } from './prisma/prisma.service';
 import { UserProfile, Prisma } from '@prisma/client-user';
 
@@ -33,11 +37,10 @@ export class UserProfileRepository extends AbstractRepository<UserProfile> {
       const userProfile = await this.prisma.userProfile.findFirst({
         where: filterQuery,
       });
+      this.ensureExists(userProfile, 'UserProfile');
       return userProfile as UserProfile;
     } catch (error: any) {
-      console.error(error);
-      if (error.code === PRISMA_ERRORS.RECORD_NOT_FOUND)
-        this.ensureExists(null, 'UserProfile');
+      this.logger.error(`Error finding UserProfile: ${error.message}`);
       throw error;
     }
   }
@@ -51,10 +54,13 @@ export class UserProfileRepository extends AbstractRepository<UserProfile> {
         where: filterQuery,
         data: update as Prisma.UserProfileUpdateInput,
       });
+      this.ensureExists(userProfile, 'UserProfile');
       return userProfile;
     } catch (error: any) {
-      if (error.code === PRISMA_ERRORS.RECORD_NOT_FOUND)
+      this.logger.error(`Error updating UserProfile: ${error.message}`);
+      if (error.code === PRISMA_ERRORS.RECORD_NOT_FOUND) {
         this.ensureExists(null, 'UserProfile');
+      }
       throw error;
     }
   }

@@ -14,21 +14,18 @@ export class TwitService {
     private readonly publisher: RmqPublisher,
   ) {}
 
-  @toRpcException()
   async getTwitById(twitId: string) {
     const twit = await this.twitRepository.findOne({ id: twitId });
     return twit;
   }
 
-  @toRpcException()
   async getTwits() {
     const twits = await this.twitRepository.find({});
     return twits;
   }
 
-  @toRpcException()
   async createTwit(content: string, userId: string) {
-    const user = await this.userProfileRepository.findUserProfile(userId);
+    const user = await this.userProfileRepository.findOne({ userId: userId });
     const newTwit = await this.twitRepository.create({
       authorId: userId,
       content: content,
@@ -36,5 +33,28 @@ export class TwitService {
       authorNickname: user.nickname,
     });
     return newTwit;
+  }
+
+  async updateAuthorInfoInTwits(userId: string, updateData: any) {
+    const updateFields: any = {};
+    if (updateData.nickname) updateFields.authorNickname = updateData.nickname;
+    if (updateData.avatarUrl)
+      updateFields.authorAvatarUrl = updateData.avatarUrl;
+
+    const count = await this.twitRepository.updateMany(
+      { authorId: userId },
+      updateFields,
+    );
+    this.logger.log(
+      `Updated ${count} twit(s) with new author info for user (${userId})`,
+    );
+    const updatedUser = await this.userProfileRepository.findOneAndUpdate(
+      { userId },
+      updateData,
+    );
+    this.logger.log(
+      `User(duplicated) profile updated in Twit service: ${JSON.stringify(updatedUser)}`,
+    );
+    return { updated: count };
   }
 }

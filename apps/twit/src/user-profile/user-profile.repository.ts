@@ -1,42 +1,69 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { UserProfile } from '@prisma/client-twit';
-import { PRISMA_ERRORS } from '@repo/common';
+import { Prisma, UserProfile } from '@prisma/client-twit';
+import { AbstractRepository, PRISMA_ERRORS } from '@repo/common';
 
 @Injectable()
-export class UserProfileRepository {
+export class UserProfileRepository extends AbstractRepository<UserProfile> {
   protected readonly logger = new Logger(UserProfileRepository.name);
 
-  constructor(private readonly prisma: PrismaService) {}
-
-  async duplicateUserProfile(data: {
-    userId: string;
-    email: string;
-    nickname: string;
-  }) {
-    return this.prisma.userProfile.create({
-      data: {
-        userId: data.userId,
-        email: data.email,
-        nickname: data.nickname,
-      },
-    });
+  constructor(private readonly prisma: PrismaService) {
+    super();
   }
 
-  async findUserProfile(userId: string): Promise<UserProfile> {
+  async create(
+    data: Omit<UserProfile, 'id' | 'bio' | 'avatarUrl'>,
+  ): Promise<UserProfile> {
     try {
-      const user = await this.prisma.userProfile.findUnique({
-        where: { userId },
+      const newUserProfile = await this.prisma.userProfile.create({
+        data: data as Prisma.UserProfileCreateInput,
       });
-      if (!user) {
-        throw new Error(`UserProfile not found: ${userId}`);
-      }
-      return user as UserProfile;
+      this.logger.log(`Created new UserProfile: ${newUserProfile.email}`);
+      return newUserProfile;
     } catch (error: any) {
+      this.logger.error(`Error creating UserProfile: ${error.message}`);
+      throw error;
+    }
+  }
+
+  async findOne(
+    filterQuery: Prisma.UserProfileWhereInput,
+  ): Promise<UserProfile> {
+    try {
+      const userProfile = await this.prisma.userProfile.findFirst({
+        where: filterQuery,
+      });
+      this.ensureExists(userProfile, 'UserProfile');
+      return userProfile as UserProfile;
+    } catch (error: any) {
+      this.logger.error(`Error finding UserProfile: ${error.message}`);
+      throw error;
+    }
+  }
+
+  async findOneAndUpdate(
+    filterQuery: Prisma.UserProfileWhereUniqueInput,
+    update: Partial<UserProfile>,
+  ): Promise<UserProfile> {
+    try {
+      const userProfile = await this.prisma.userProfile.update({
+        where: filterQuery,
+        data: update as Prisma.UserProfileUpdateInput,
+      });
+      this.ensureExists(userProfile, 'UserProfile');
+      return userProfile;
+    } catch (error: any) {
+      this.logger.error(`Error updating UserProfile: ${error.message}`);
       if (error.code === PRISMA_ERRORS.RECORD_NOT_FOUND) {
-        this.logger.error(`Error finding user profile: ${error.message}`);
+        this.ensureExists(null, 'UserProfile');
       }
       throw error;
     }
+  }
+
+  async find(
+    filterQuery: Prisma.UserProfileWhereInput,
+  ): Promise<UserProfile[]> {
+    return this.prisma.userProfile.findMany({ where: filterQuery });
   }
 }

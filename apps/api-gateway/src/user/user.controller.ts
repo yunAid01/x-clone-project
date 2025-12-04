@@ -19,6 +19,7 @@ import { AuthGuard } from '@nestjs/passport';
 // DTOs
 import { RegisterDto, LoginDto } from '../dtos/auth.dto';
 import { ZodResponse } from 'nestjs-zod';
+import type { AuthenticatedUser } from '@repo/validation';
 
 @UseGuards(AuthGuard('jwt'))
 @Controller('user')
@@ -36,23 +37,26 @@ export class UserController {
     return this.userClient.send('getAllUsers', {});
   }
 
-  @Get(':id')
+  @Get(':userId')
   @UseInterceptors(CacheInterceptor)
-  getUserProfile(@Param('id') id: string) {
+  getUserProfile(@Param('userId') userId: string) {
     console.log('🚀 [Gateway] User 서비스로 getUser 신호를 보냅니다...');
-    return this.userClient.send('getUser', { id });
+    return this.userClient.send('getUser', { userId });
   }
 
-  @Patch(':id')
-  updateUser(@Param('id') id: string, @Body() updateUserData: any) {
+  @Patch()
+  updateUser(@User() user: AuthenticatedUser, @Body() updateUserData: any) {
     console.log('🚀 [Gateway] User 서비스로 updateUser 신호를 보냅니다...');
-    return this.userClient.send('updateUser', { id, ...updateUserData });
+    return this.userClient.send('updateUser', {
+      userId: user.userId,
+      updateUserData: updateUserData,
+    });
   }
 
   @Post(':targetUserId/follow')
   followUser(
     @Param('targetUserId') targetUserId: string,
-    @User() user: { userId: string; email: string },
+    @User() user: AuthenticatedUser,
   ) {
     this.logger.log(user);
     this.logger.log('🚀 [Gateway] User 서비스로 followUser 신호를 보냅니다...');
@@ -65,7 +69,7 @@ export class UserController {
   @Post(':targetUserId/unfollow')
   unfollowUser(
     @Param('targetUserId') targetUserId: string,
-    @User() user: { userId: string; email: string },
+    @User() user: AuthenticatedUser,
   ) {
     console.log('🚀 [Gateway] User 서비스로 unfollowUser 신호를 보냅니다...');
     return this.userClient.send('unfollowUser', {

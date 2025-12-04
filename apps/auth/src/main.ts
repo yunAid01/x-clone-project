@@ -29,14 +29,13 @@ async function bootstrap() {
   // 3. 서버 시작 전 바인딩 수행
   await setupRabbitMQ(RMQ_URL, QUEUE_NAME, RABBITMQ_EXCHANGE, ROUTING_KEY);
 
-  // 4. 마이크로서비스 연결 (RmqService 활용)
+  // 5. 마이크로서비스 연결 (RmqService 활용)
   // 'AUTH'를 넣으면 내부적으로 RABBITMQ_AUTH_QUEUE 환경변수 값을 큐 이름으로 사용합니다.
   // noAck: false로 설정하여 수동 ACK 모드를 사용합니다 (안정성 확보).
   app.connectMicroservice(rmqService.getOptions('AUTH', false));
-  app.useGlobalFilters(new FitRpcExceptionFilter());
   await app.startAllMicroservices();
 
-  // 5. HTTP 서버 시작 (헬스 체크 등을 위해 필요)
+  // 6. HTTP 서버 시작 (헬스 체크 등을 위해 필요)
   await app.listen(port);
   console.log(
     `🚀port:${port} [Auth] 서비스가 실행되었습니다! (Queue: ${QUEUE_NAME})`,
