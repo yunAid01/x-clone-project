@@ -5,6 +5,7 @@ import {
   Body,
   HttpException,
   HttpCode,
+  Logger,
 } from '@nestjs/common';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
 
@@ -15,13 +16,15 @@ import { catchError, throwError } from 'rxjs';
 
 @Controller('auth')
 export class AuthController {
+  private readonly logger = new Logger(AuthController.name);
+
   constructor(@Inject('AUTH') private readonly authClient: ClientProxy) {}
 
   @Post('register')
   @HttpCode(201)
   // todo - @ZodResponse()
   userRegister(@Body() registerData: RegisterDto) {
-    console.log('🚀 [Gateway] Auth 서비스로 register 신호를 보냅니다...');
+    this.logger.log('🚀 [Gateway] Auth 서비스로 register 신호를 보냅니다...');
     return this.authClient.send('register', registerData);
   }
 
@@ -29,7 +32,7 @@ export class AuthController {
   @HttpCode(200)
   // todo - @ZodResponse()
   userLogin(@Body() loginData: LoginDto) {
-    console.log('🚀 [Gateway] Auth 서비스로 login 신호를 보냅니다...');
+    this.logger.log('🚀 [Gateway] Auth 서비스로 login 신호를 보냅니다...');
     return this.authClient.send('login', { ...loginData });
   }
 }

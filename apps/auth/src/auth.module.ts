@@ -35,6 +35,7 @@ import { AuthRepository } from './auth.repository';
       inject: [ConfigService],
     }),
     RmqModule.register({ name: 'AUTH' }),
+    RmqModule.register({ name: 'USER' }),
     PrismaModule,
   ],
   controllers: [AuthController],

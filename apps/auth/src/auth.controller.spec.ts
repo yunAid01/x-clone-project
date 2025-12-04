@@ -14,10 +14,13 @@ const mockLoginResult = {
   statusCode: 200,
   message: 'successfully logged in',
   token: 'fake-jwt-token',
-  user: {
-    id: 'user-123',
-    email: 'test@example.com',
-    name: 'Test User',
+  userProfile: {
+    id: 'userProfile-123',
+    userId: 'auth-user-123',
+    email: 'test@test.com',
+    nickname: 'Test User',
+    bio: null,
+    avatarUrl: null,
   },
 };
 
@@ -46,7 +49,7 @@ describe('AppController', () => {
   const registerData = {
     email: 'test@example.com',
     password: '1234',
-    name: 'Test User',
+    nickname: 'Test User',
   };
 
   const loginData = {
@@ -77,16 +80,7 @@ describe('AppController', () => {
 
   describe('userLogin', () => {
     it('should login a user', async () => {
-      AuthServiceMock.userLogin.mockResolvedValue({
-        statusCode: 200,
-        message: 'successfully logged in',
-        token: 'fake-jwt-token',
-        user: {
-          id: 'user-123',
-          email: 'test@example.com',
-          name: 'Test User',
-        },
-      });
+      AuthServiceMock.userLogin.mockResolvedValue(mockLoginResult);
       const result = await controller.userLogin(
         loginData,
         RmqContextMock as any,

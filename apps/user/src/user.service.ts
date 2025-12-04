@@ -34,9 +34,9 @@ export class UserService {
   }
 
   @toRpcException()
-  async getUserProfile(id: string) {
+  async getUserProfile(userId: string) {
     const userProfile = await this.userProfileRepository.findOne({
-      id: id,
+      userId: userId,
     });
     return userProfile;
   }

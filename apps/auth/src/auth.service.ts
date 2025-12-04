@@ -12,6 +12,8 @@ import * as bcrypt from 'bcrypt';
 import { toRpcException } from '@repo/common';
 import { RmqPublisher } from '@repo/common';
 import { AuthRepository } from './auth.repository';
+import { ClientProxy } from '@nestjs/microservices';
+import { lastValueFrom } from 'rxjs'; // 👈 추가
 
 @Injectable()
 export class AuthService {
@@ -21,11 +23,12 @@ export class AuthService {
     private readonly jwtService: JwtService,
     private readonly publisher: RmqPublisher,
     private readonly authRepository: AuthRepository,
+    @Inject('USER') private readonly userClient: ClientProxy,
   ) {}
 
   @toRpcException()
   async userRegister(data: any) {
-    const { email, password, name } = data;
+    const { email, password, nickname } = data;
     const existingUser = await this.authRepository.findByEmail(email);
     if (existingUser) {
       this.logger.debug(`Attempt to register with existing email: ${email}`);
@@ -35,13 +38,13 @@ export class AuthService {
     const newUser = await this.authRepository.create({
       email,
       password: hashedPassword,
-      name,
+      nickname,
       role: 'USER', // default
     });
     this.publisher.publish('user.created', {
-      userId: newUser.id,
+      userId: newUser.userId,
       email: newUser.email,
-      nickname: newUser.name,
+      nickname: newUser.nickname,
     });
     return { statusCode: 201, message: 'successfully registered' };
   }
@@ -61,18 +64,22 @@ export class AuthService {
       throw new BadRequestException('login Error: Invalid credentials');
     }
     const token = this.jwtService.sign({
-      userId: existingUser.id,
+      userId: existingUser.userId,
       email: existingUser.email,
     });
+
+    // 👇 Observable을 Promise로 변환
+    const userProfile = await lastValueFrom(
+      this.userClient.send('loginUserProfile', {
+        userId: existingUser.userId,
+      }),
+    );
+
     return {
       statusCode: 200,
       token: token,
       message: 'successfully logged in',
-      user: {
-        id: existingUser.id,
-        email: existingUser.email,
-        name: existingUser.name,
-      },
+      userProfile: userProfile,
     };
   }
 }

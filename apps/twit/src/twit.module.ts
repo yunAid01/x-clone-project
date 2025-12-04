@@ -2,7 +2,9 @@ import { Module } from '@nestjs/common';
 import { TwitController } from './twit.controller';
 import { TwitService } from './twit.service';
 import { ConfigModule } from '@nestjs/config';
-import { RmqModule } from '@repo/common';
+import { RmqModule, RmqPublisher } from '@repo/common';
+import { PrismaModule } from './prisma/prisma.module';
+import { TwitRepository } from './twit.repository';
 
 @Module({
   imports: [
@@ -23,8 +25,9 @@ import { RmqModule } from '@repo/common';
       })(),
     }),
     RmqModule.register({ name: 'TWIT' }),
+    PrismaModule,
   ],
   controllers: [TwitController],
-  providers: [TwitService],
+  providers: [TwitService, RmqPublisher, TwitRepository],
 })
 export class TwitModule {}

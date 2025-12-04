@@ -10,13 +10,27 @@ generator client {
   output   = "../../../node_modules/@prisma/client-twit"
 }
 
+// userProfile model 복제
+model UserProfile {
+  id        String   @id @default(uuid())
+  userId    String   @unique // Auth 서비스의 User ID와 연결고리! (중요)
+  email     String   @unique
+  nickname  String  
+  bio       String?  
+  avatarUrl String?  
+}
+
 model Twit {
   id        String   @id @default(uuid())
   content   String
   authorId  String   // 작성자의 ID (User 서비스의 그 ID)
+  authorNickname String // 작성자 닉네임
+  authorAvatarUrl String // 작성자 프사 URL
   createdAt DateTime @default(now())
   
   likes     Like[]
+  retwits   Retwit[]
+  comments  Comment[]
 }
 
 model Like {
@@ -24,6 +38,41 @@ model Like {
   twitId    String
   userId    String   // 좋아요 누른 사람 ID
   twit      Twit     @relation(fields: [twitId], references: [id])
+  createdAt DateTime @default(now())
 
   @@unique([twitId, userId]) // 한 트윗에 좋아요는 한 번만
+}
+
+model Retwit {
+  id        String   @id @default(uuid())
+  twitId    String
+  userId    String   // 리트윗한 사람 ID
+  createdAt DateTime @default(now())
+  twit      Twit     @relation(fields: [twitId], references: [id])
+
+  @@unique([twitId, userId]) // 한 트윗에 리트윗은 한 번만
+}
+model Comment {
+  id        String   @id @default(uuid())
+  twitId    String
+  authorId  String   // 댓글 작성자 ID
+  authorNickname String // 댓글 작성자 닉네임
+  authorAvatarUrl String // 댓글 작성자 프사 URL
+  content   String
+  createdAt DateTime @default(now())
+  parentId  String?  // 👈 부모 댓글 ID (null이면 최상위 댓글)
+  
+  twit      Twit     @relation(fields: [twitId], references: [id])
+  parent    Comment?  @relation("CommentReplies", fields: [parentId], references: [id])
+  replies   Comment[] @relation("CommentReplies")  // 대댓글들
+  likes     CommentLike[]
+}
+
+model CommentLike {
+  id        String   @id @default(uuid())
+  commentId String
+  userId    String   // 댓글 좋아요 누른 사람 ID
+  comment   Comment  @relation(fields: [commentId], references: [id])
+  createdAt DateTime @default(now())
+  @@unique([commentId, userId]) // 한 댓글에 좋아요는 한 번만
 }

@@ -34,6 +34,24 @@ export class UserController {
     }
   }
 
+  @MessagePattern('loginUserProfile')
+  async getLoginUserProfile(
+    @Payload() data: { userId: string },
+    @Ctx() context: RmqContext,
+  ) {
+    try {
+      const userProfile = await this.userService.getUserProfile(data.userId);
+      this.logger.log(
+        `✅ 로그인 사용자 프로필 조회 완료! User ID: ${data.userId}`,
+      );
+      this.rmqService.ack(context);
+      return userProfile;
+    } catch (error) {
+      this.logger.error(error);
+      this.rmqService.ack(context);
+    }
+  }
+
   @MessagePattern('getAllUsers')
   async getAllUsers(@Ctx() context: RmqContext) {
     try {

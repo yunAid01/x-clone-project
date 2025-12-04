@@ -8,10 +8,12 @@ import {
   AuthRepositoryMock,
   JwtServiceMock,
   RmqPublisherMock,
+  ClientProxyMock,
 } from '@repo/tests';
 import { RmqPublisher, toRpcException } from '@repo/common';
 import { AuthRepository } from './auth.repository';
 import { RpcException } from '@nestjs/microservices';
+import { of } from 'rxjs';
 
 // bcypt 호출시 jest의 mock 함수로 대체
 jest.mock('bcrypt', () => ({
@@ -29,6 +31,7 @@ describe('AuthService', () => {
         { provide: JwtService, useValue: JwtServiceMock },
         { provide: RmqPublisher, useValue: RmqPublisherMock },
         { provide: AuthRepository, useValue: AuthRepositoryMock },
+        { provide: 'USER', useValue: ClientProxyMock }, // 👈 User ClientProxy Mock
       ],
     }).compile();
 
@@ -38,7 +41,7 @@ describe('AuthService', () => {
   let registerData = {
     email: 'test@example.com',
     password: '1234',
-    name: 'Test User',
+    nickname: 'Test User',
   };
   let loginData = {
     email: 'test@example.com',
@@ -48,13 +51,12 @@ describe('AuthService', () => {
   const fakeToken = 'fake-jwt-token';
   const DATE = new Date('2025-12-03T07:13:28.878Z');
   const fakeUserDBData = {
-    id: 1,
+    userId: 'auth-user-123',
     email: 'test@example.com',
-    name: 'Test User',
+    nickname: 'Test User',
     role: 'USER',
     password: hashedPassword,
     createdAt: DATE,
-    updatedAt: DATE,
   };
 
   afterEach(() => {
@@ -65,14 +67,7 @@ describe('AuthService', () => {
     it('should be registered with correct data"', async () => {
       AuthRepositoryMock.findByEmail.mockResolvedValue(null);
       (bcrypt.hash as jest.Mock).mockResolvedValue(hashedPassword);
-      AuthRepositoryMock.create.mockResolvedValue({
-        id: 'user-123',
-        email: registerData.email,
-        name: registerData.name,
-        password: hashedPassword,
-        role: 'USER',
-        createdAt: DATE,
-      });
+      AuthRepositoryMock.create.mockResolvedValue(fakeUserDBData);
 
       const result = await service.userRegister(registerData);
       expect(result).toEqual({
@@ -80,9 +75,9 @@ describe('AuthService', () => {
         message: 'successfully registered',
       });
       expect(RmqPublisherMock.publish).toHaveBeenCalledWith('user.created', {
-        userId: 'user-123',
+        userId: 'auth-user-123',
         email: registerData.email,
-        nickname: registerData.name,
+        nickname: registerData.nickname,
       });
       expect(AuthRepositoryMock.findByEmail).toHaveBeenCalledWith(
         registerData.email,
@@ -91,7 +86,7 @@ describe('AuthService', () => {
       expect(AuthRepositoryMock.create).toHaveBeenCalledWith({
         email: registerData.email,
         password: hashedPassword,
-        name: registerData.name,
+        nickname: registerData.nickname,
         role: 'USER',
       });
     });
@@ -121,24 +116,34 @@ describe('AuthService', () => {
       (bcrypt.compare as jest.Mock).mockResolvedValue(true);
       JwtServiceMock.sign.mockReturnValue(fakeToken);
 
+      // 👇 User 서비스에서 프로필 정보 반환 Mock
+      const mockUserProfile = {
+        id: 'userProfile-123',
+        userId: 'auth-user-123',
+        email: 'test@test.com',
+        nickname: 'tester',
+        bio: null,
+        avatarUrl: null,
+      };
+      ClientProxyMock.send.mockReturnValue(of(mockUserProfile));
+
       const result = await service.userLogin(loginData);
       expect(result).toEqual({
         statusCode: 200,
         token: fakeToken,
         message: 'successfully logged in',
-        user: {
-          id: fakeUserDBData.id,
-          email: fakeUserDBData.email,
-          name: fakeUserDBData.name,
-        },
+        userProfile: mockUserProfile,
       });
       expect(bcrypt.compare).toHaveBeenCalledWith(
         loginData.password,
         fakeUserDBData.password,
       );
       expect(JwtServiceMock.sign).toHaveBeenCalledWith({
-        userId: fakeUserDBData.id,
+        userId: fakeUserDBData.userId,
         email: fakeUserDBData.email,
+      });
+      expect(ClientProxyMock.send).toHaveBeenCalledWith('loginUserProfile', {
+        userId: fakeUserDBData.userId,
       });
     });
 
