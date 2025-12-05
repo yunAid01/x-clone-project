@@ -81,4 +81,6 @@ ENV PORT=8000
 
 WORKDIR /app/apps/twit
 
-CMD ["node", "dist/main.js"]
+COPY --from=builder --chown=nestjs:nodejs /app/apps/twit/prisma ./prisma
+
+CMD ["sh", "-c", "npx prisma migrate deploy && node dist/main.js"]

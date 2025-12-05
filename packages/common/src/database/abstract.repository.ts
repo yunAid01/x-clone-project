@@ -14,6 +14,8 @@ export abstract class AbstractRepository<TDocument> {
 
   abstract find(filterQuery: any): Promise<TDocument[]>;
 
+  abstract delete(filterQuery: any): Promise<boolean | TDocument>;
+
   // 공통 에러 처리 로직
   protected ensureExists(document: TDocument | null, entityName: string): void {
     if (!document) {

@@ -60,6 +60,15 @@ export class AuthRepository extends AbstractRepository<User> {
     return this.prisma.user.findMany({ where: filterQuery });
   }
 
+  async delete(filterQuery: Prisma.UserWhereUniqueInput): Promise<boolean> {
+    try {
+      await this.prisma.user.delete({ where: filterQuery });
+      return true;
+    } catch (error: any) {
+      this.logger.error(`Error deleting User: ${error.message}`);
+      throw error;
+    }
+  }
   /**
    * 커스텀 메서드: 이메일로 유저 찾기 (없으면 null 반환)
    */

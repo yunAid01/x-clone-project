@@ -6,17 +6,31 @@ import {
 } from '@nestjs/common';
 import { UserProfileRepository } from './userprofile.reposigory';
 import { UserFollowRepository } from './userfollow.repository';
-import { RmqPublisher, toRpcException } from '@repo/common';
+import {
+  RmqPublisher,
+  toRpcException,
+  Ssagazi,
+  SsagaziContainer,
+} from '@repo/common';
+
 @Injectable()
-export class UserService {
+export class UserService implements SsagaziContainer {
   private readonly logger = new Logger(UserService.name);
 
   constructor(
     private readonly userProfileRepository: UserProfileRepository,
     private readonly userFollowRepository: UserFollowRepository,
-    private readonly publisher: RmqPublisher,
+    public readonly publisher: RmqPublisher,
   ) {}
 
+  @Ssagazi({
+    successMessage: 'user.profile.created',
+    failureMessage: 'user.profile.creation_failed',
+    failureData: (err, args) => ({
+      userId: args[0].userId,
+      reason: err.message,
+    }),
+  })
   async createUserProfile(data: any) {
     const { userId, email, nickname } = data;
     const newUserProfile = await this.userProfileRepository.create({

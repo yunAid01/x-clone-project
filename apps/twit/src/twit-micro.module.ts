@@ -1,9 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { RmqModule, RmqPublisher } from '@repo/common';
 import { PrismaModule } from './prisma/prisma.module';
-import { TwitModule } from './twit/twit.module';
-import { UserProfileModule } from './user-profile/user-profile.module';
+import { TwitModule } from './twit.module';
 
 @Module({
   imports: [
@@ -25,8 +23,7 @@ import { UserProfileModule } from './user-profile/user-profile.module';
     }),
     PrismaModule,
     TwitModule,
-    UserProfileModule,
   ],
-  providers: [RmqPublisher],
+  providers: [],
 })
 export class TwitMicroModule {}

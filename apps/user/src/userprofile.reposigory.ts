@@ -70,4 +70,16 @@ export class UserProfileRepository extends AbstractRepository<UserProfile> {
   ): Promise<UserProfile[]> {
     return this.prisma.userProfile.findMany({ where: filterQuery });
   }
+
+  async delete(
+    filterQuery: Prisma.UserProfileWhereUniqueInput,
+  ): Promise<boolean> {
+    try {
+      await this.prisma.userProfile.delete({ where: filterQuery });
+      return true;
+    } catch (error: any) {
+      this.logger.error(`Error deleting UserProfile: ${error.message}`);
+      throw error;
+    }
+  }
 }

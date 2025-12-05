@@ -48,6 +48,17 @@ export class AuthService {
     return { statusCode: 201, message: 'successfully registered' };
   }
 
+  async rollbackUserRegister(data: any) {
+    this.logger.warn(
+      `Rollback userRegister triggered with data: ${JSON.stringify(data)}`,
+    );
+    // Implement rollback logic here, e.g., delete the user if created
+    await this.authRepository.delete({ email: data.email });
+    this.logger.log(
+      `Rollback successful for userRegister with email: ${data.email}`,
+    );
+  }
+
   async userLogin(data: any) {
     const { email, password } = data;
     const existingUser = await this.authRepository.findByEmail(email);

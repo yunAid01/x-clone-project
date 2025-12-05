@@ -59,6 +59,5 @@ export class RmqPublisher implements OnModuleInit, OnModuleDestroy {
 
     // Buffer 변환 후 발행
     this.channel.publish(RABBITMQ_EXCHANGE, pattern, Buffer.from(message));
-    this.logger.debug(`📢 이벤트 발행: ${pattern}`);
   }
 }

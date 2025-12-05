@@ -54,9 +54,18 @@ export class UserProfileRepository extends AbstractRepository<UserProfile> {
       return userProfile;
     } catch (error: any) {
       this.logger.error(`Error updating UserProfile: ${error.message}`);
-      if (error.code === PRISMA_ERRORS.RECORD_NOT_FOUND) {
-        this.ensureExists(null, 'UserProfile');
-      }
+      throw error;
+    }
+  }
+
+  async delete(
+    filterQuery: Prisma.UserProfileWhereUniqueInput,
+  ): Promise<boolean> {
+    try {
+      await this.prisma.userProfile.delete({ where: filterQuery });
+      return true;
+    } catch (error: any) {
+      this.logger.error(`Error deleting UserProfile: ${error.message}`);
       throw error;
     }
   }

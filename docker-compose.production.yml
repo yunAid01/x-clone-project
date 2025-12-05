@@ -91,45 +91,45 @@ services:
       - api-gateway
     restart: unless-stopped
 
-  # twit-microservice:
-  #   build:
-  #     context: .
-  #     dockerfile: apps/twit/Dockerfile
-  #   container_name: x-clone-twit
-  #   ports:
-  #     - '${TWIT_SERVICE_PORT}:${TWIT_SERVICE_PORT}'
-  #   environment:
-  #     NODE_ENV: ${NODE_ENV:-production}
-  #     PORT: ${TWIT_SERVICE_PORT}
-  #     DATABASE_TWIT_URL: ${DATABASE_TWIT_URL}
-  #     RABBITMQ_URL: amqp://${RABBITMQ_DEFAULT_USER}:${RABBITMQ_DEFAULT_PASS}@fucking-rabbitmq:${RABBITMQ_PORT}/
-  #     RABBITMQ_TWIT_QUEUE: twit_queue
-  #   depends_on:
-  #     - fucking-postgres
-  #     - fucking-redis
-  #     - fucking-rabbitmq
-  #     - api-gateway
-  #   restart: unless-stopped
+  twit-microservice:
+    build:
+      context: .
+      dockerfile: apps/twit/Dockerfile
+    container_name: x-clone-twit
+    ports:
+      - '${TWIT_SERVICE_PORT}:${TWIT_SERVICE_PORT}'
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      PORT: ${TWIT_SERVICE_PORT}
+      DATABASE_TWIT_URL: ${DATABASE_TWIT_URL}
+      RABBITMQ_URL: amqp://${RABBITMQ_DEFAULT_USER}:${RABBITMQ_DEFAULT_PASS}@fucking-rabbitmq:${RABBITMQ_PORT}/
+      RABBITMQ_TWIT_QUEUE: twit_queue
+    depends_on:
+      - fucking-postgres
+      - fucking-redis
+      - fucking-rabbitmq
+      - api-gateway
+    restart: unless-stopped
 
-  # notification-microservice:
-  #   build:
-  #     context: .
-  #     dockerfile: apps/notification/Dockerfile
-  #   container_name: x-clone-notification
-  #   ports:
-  #     - '${NOTIFICATION_SERVICE_PORT}:${NOTIFICATION_SERVICE_PORT}'
-  #   environment:
-  #     NODE_ENV: ${NODE_ENV:-production}
-  #     PORT: ${NOTIFICATION_SERVICE_PORT}
-  #     DATABASE_NOTIFICATION_URL: ${DATABASE_NOTIFICATION_URL}
-  #     RABBITMQ_URL: amqp://${RABBITMQ_DEFAULT_USER}:${RABBITMQ_DEFAULT_PASS}@fucking-rabbitmq:${RABBITMQ_PORT}/
-  #     RABBITMQ_NOTIFICATION_QUEUE: notification_queue
-  #   depends_on:
-  #     - fucking-postgres
-  #     - fucking-redis
-  #     - fucking-rabbitmq
-  #     - api-gateway
-  #   restart: unless-stopped
+  notification-microservice:
+    build:
+      context: .
+      dockerfile: apps/notification/Dockerfile
+    container_name: x-clone-notification
+    ports:
+      - '${NOTIFICATION_SERVICE_PORT}:${NOTIFICATION_SERVICE_PORT}'
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      PORT: ${NOTIFICATION_SERVICE_PORT}
+      DATABASE_NOTIFICATION_URL: ${DATABASE_NOTIFICATION_URL}
+      RABBITMQ_URL: amqp://${RABBITMQ_DEFAULT_USER}:${RABBITMQ_DEFAULT_PASS}@fucking-rabbitmq:${RABBITMQ_PORT}/
+      RABBITMQ_NOTIFICATION_QUEUE: notification_queue
+    depends_on:
+      - fucking-postgres
+      - fucking-redis
+      - fucking-rabbitmq
+      - api-gateway
+    restart: unless-stopped
 
   fucking-adminer:
     image: adminer

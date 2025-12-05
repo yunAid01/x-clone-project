@@ -24,11 +24,12 @@ async function bootstrap() {
   const RMQ_URL = configService.get('RABBITMQ_URL');
   // RmqService는 'RABBITMQ_AUTH_QUEUE' 환경변수를 찾으므로, 여기서도 맞춰줍니다.
   const QUEUE_NAME = configService.get('RABBITMQ_AUTH_QUEUE');
-  const ROUTING_KEY = 'auth.#';
+  const ROUTING_KEY_AUTH = 'auth.#';
+  const ROUTING_KEY_USER = 'user.#';
 
   // 3. 서버 시작 전 바인딩 수행
-  await setupRabbitMQ(RMQ_URL, QUEUE_NAME, RABBITMQ_EXCHANGE, ROUTING_KEY);
-
+  await setupRabbitMQ(RMQ_URL, QUEUE_NAME, RABBITMQ_EXCHANGE, ROUTING_KEY_AUTH);
+  await setupRabbitMQ(RMQ_URL, QUEUE_NAME, RABBITMQ_EXCHANGE, ROUTING_KEY_USER);
   // 5. 마이크로서비스 연결 (RmqService 활용)
   // 'AUTH'를 넣으면 내부적으로 RABBITMQ_AUTH_QUEUE 환경변수 값을 큐 이름으로 사용합니다.
   // noAck: false로 설정하여 수동 ACK 모드를 사용합니다 (안정성 확보).

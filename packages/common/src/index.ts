@@ -7,6 +7,8 @@ export * from './rmq/rmq.service';
 // decoratos
 export * from './decorators/toRpcDecorator';
 export * from './decorators/user.decorator';
+export * from './decorators/saga.decorator';
+export * from './decorators/ssagaziPattern.decorator';
 
 // database
 export * from './database/abstract.repository';

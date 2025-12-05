@@ -34,6 +34,35 @@ export class TwitController {
     return newTwit;
   }
 
+  @MessagePattern('updateTwit')
+  async updateTwit(
+    @Ctx() context: RmqContext,
+    @Payload() data: { userId: string; twitId: string; content: string },
+  ) {
+    this.logger.log('🐦 [Twits] 트윗 수정 요청받음');
+    const updatedTwit = await this.twitService.updateTwit(
+      data.userId,
+      data.twitId,
+      data.content,
+    );
+    this.rmqService.ack(context);
+    return updatedTwit;
+  }
+
+  @MessagePattern('deleteTwit')
+  async deleteTwit(
+    @Ctx() context: RmqContext,
+    @Payload() data: { userId: string; twitId: string },
+  ) {
+    this.logger.log('🐦 [Twits] 트윗 삭제 요청받음');
+    const deleteResult = await this.twitService.deleteTwit(
+      data.userId,
+      data.twitId,
+    );
+    this.rmqService.ack(context);
+    return deleteResult;
+  }
+
   @MessagePattern('getTwit')
   async getTwitDetail(
     @Ctx() context: RmqContext,
@@ -51,14 +80,5 @@ export class TwitController {
     const twits = await this.twitService.getTwits();
     this.rmqService.ack(context);
     return twits;
-  }
-
-  @EventPattern('user.updated')
-  async handleUserUpdated(@Payload() data: any, @Ctx() context: RmqContext) {
-    this.logger.log(
-      `🐦 [Twits] 사용자 업데이트 이벤트 수신: ${JSON.stringify(data)}`,
-    );
-    this.twitService.updateAuthorInfoInTwits(data.userId, data);
-    this.rmqService.ack(context);
   }
 }

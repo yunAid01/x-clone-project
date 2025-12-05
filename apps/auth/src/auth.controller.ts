@@ -9,6 +9,7 @@ import {
 import { AuthService } from './auth.service';
 import {
   Ctx,
+  EventPattern,
   MessagePattern,
   Payload,
   RmqContext,
@@ -16,6 +17,7 @@ import {
 import {
   FitRpcExceptionFilter,
   RmqService,
+  SsagaziPattern,
   toRpcException,
 } from '@repo/common';
 import type { LoginDtoType, RegisterDtoType } from '@repo/validation';
@@ -30,7 +32,7 @@ export class AuthController {
     private readonly rmqService: RmqService,
   ) {}
 
-  @MessagePattern('register')
+  @SsagaziPattern('register', 'user.profile.creation_failed')
   async userRegister(
     @Payload() data: RegisterDtoType,
     @Ctx() context: RmqContext,
@@ -39,6 +41,17 @@ export class AuthController {
     const result = await this.authService.userRegister(data);
     this.rmqService.ack(context); // 메시지 처리 후 ACK 전송
     return result;
+  }
+
+  @EventPattern('user.profile.creation_failed')
+  async handleUserProfileCreationFailed(
+    @Payload()
+    data: {},
+  ) {
+    this.logger.error(
+      `❌ [Auth] 사용자 프로필 생성 실패 이벤트 수신: ${JSON.stringify(data)}`,
+    );
+    // 추가적인 오류 처리 로직을 여기에 작성할 수 있습니다.
   }
 
   @MessagePattern('login')

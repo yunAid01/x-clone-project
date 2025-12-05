@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { RmqPublisher, toRpcException } from '@repo/common';
 import { Logger } from '@nestjs/common';
 import { UserProfileRepository } from '../user-profile/user-profile.repository';
@@ -35,6 +35,34 @@ export class TwitService {
     return newTwit;
   }
 
+  async updateTwit(userId: string, twitId: string, content: string) {
+    const twit = await this.twitRepository.findOne({
+      id: twitId,
+    });
+    if (twit.authorId !== userId) {
+      throw new BadRequestException('can only update your own twit.');
+    }
+    const updatedTwit = await this.twitRepository.findOneAndUpdate(
+      { id: twitId },
+      { content: content },
+    );
+    return updatedTwit;
+  }
+
+  async deleteTwit(userId: string, twitId: string) {
+    const twit = await this.twitRepository.findOne({
+      id: twitId,
+    });
+    if (twit.authorId !== userId) {
+      throw new BadRequestException('can only delete your own twit.');
+    }
+    const isDeleted = await this.twitRepository.delete({ id: twitId });
+    return {
+      isDeleted,
+      message: 'Twit deleted successfully',
+    };
+  }
+
   async updateAuthorInfoInTwits(userId: string, updateData: any) {
     const updateFields: any = {};
     if (updateData.nickname) updateFields.authorNickname = updateData.nickname;
@@ -45,15 +73,9 @@ export class TwitService {
       { authorId: userId },
       updateFields,
     );
+
     this.logger.log(
       `Updated ${count} twit(s) with new author info for user (${userId})`,
-    );
-    const updatedUser = await this.userProfileRepository.findOneAndUpdate(
-      { userId },
-      updateData,
-    );
-    this.logger.log(
-      `User(duplicated) profile updated in Twit service: ${JSON.stringify(updatedUser)}`,
     );
     return { updated: count };
   }

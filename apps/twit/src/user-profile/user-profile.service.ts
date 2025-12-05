@@ -22,4 +22,24 @@ export class UserProfileService {
       message: 'User profile duplicated in Twit service',
     };
   }
+
+  async updateUserProfile(data: {
+    userId: string;
+    nickname?: string;
+    avatarUrl?: string;
+  }) {
+    const updateFields: any = {};
+    if (data.nickname) updateFields.nickname = data.nickname;
+    if (data.avatarUrl) updateFields.avatarUrl = data.avatarUrl;
+
+    const updatedUser = await this.userProfileRepository.findOneAndUpdate(
+      { userId: data.userId },
+      updateFields,
+    );
+
+    this.logger.log(
+      `User profile updated in Twit service: ${JSON.stringify(updatedUser)}`,
+    );
+    return updatedUser;
+  }
 }

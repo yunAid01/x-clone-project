@@ -11,7 +11,12 @@ export class TwitRepository extends AbstractRepository<Twit> {
     super();
   }
 
-  async create(data: Omit<Twit, 'id' | 'createdAt'>): Promise<Twit> {
+  async create(
+    data: Omit<
+      Twit,
+      'id' | 'likeCount' | 'retwitCount' | 'commentCount' | 'createdAt'
+    >,
+  ): Promise<Twit> {
     try {
       const newTwit = await this.prisma.twit.create({
         data: {
@@ -59,6 +64,16 @@ export class TwitRepository extends AbstractRepository<Twit> {
 
   async find(filterQuery: Prisma.TwitWhereInput): Promise<Twit[]> {
     return this.prisma.twit.findMany({ where: filterQuery });
+  }
+
+  async delete(filterQuery: Prisma.TwitWhereUniqueInput): Promise<boolean> {
+    try {
+      await this.prisma.twit.delete({ where: filterQuery });
+      return true;
+    } catch (error: any) {
+      this.logger.error(`Error deleting Twit: ${error.message}`);
+      throw error;
+    }
   }
 
   // custom

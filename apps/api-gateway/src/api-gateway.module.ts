@@ -14,7 +14,8 @@ import { RmqModule } from '@repo/common';
 import { ZodSerializerInterceptor, ZodValidationPipe } from 'nestjs-zod';
 import { APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
 import { UserController } from './user/user.controller';
-import { TwitController } from './twit/twit.controller';
+import { TwitController } from './twit/twit.feed.controller';
+import { CommentController } from './twit/twit.comment.controller';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -59,7 +60,12 @@ import { TwitController } from './twit/twit.controller';
       inject: [ConfigService],
     }),
   ],
-  controllers: [AuthController, UserController, TwitController],
+  controllers: [
+    AuthController,
+    UserController,
+    TwitController,
+    CommentController,
+  ],
   providers: [
     JwtStrategy,
     {

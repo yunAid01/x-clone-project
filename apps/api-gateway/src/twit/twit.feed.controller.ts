@@ -10,6 +10,8 @@ import {
   UseGuards,
   UseInterceptors,
   Param,
+  Patch,
+  Delete,
 } from '@nestjs/common';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { User } from '@repo/common';
@@ -53,6 +55,29 @@ export class TwitController {
     return this.twitClient.send('createTwit', {
       content: createTwitData.content,
       userId: user.userId,
+    });
+  }
+
+  @Patch(':twitId')
+  updateTwit(
+    @Param('twitId') twitId: string,
+    @Body() data: { content: string },
+    @User() user: AuthenticatedUser,
+  ) {
+    this.logger.log('🚀 [Gateway] Twit 서비스로 updateTwit 신호를 보냅니다...');
+    return this.twitClient.send('updateTwit', {
+      userId: user.userId,
+      twitId: twitId,
+      content: data.content,
+    });
+  }
+
+  @Delete(':twitId')
+  deleteTwit(@Param('twitId') twitId: string, @User() user: AuthenticatedUser) {
+    this.logger.log('🚀 [Gateway] Twit 서비스로 deleteTwit 신호를 보냅니다...');
+    return this.twitClient.send('deleteTwit', {
+      userId: user.userId,
+      twitId: twitId,
     });
   }
 }

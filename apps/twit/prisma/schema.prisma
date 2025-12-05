@@ -27,7 +27,10 @@ model Twit {
   authorNickname String // 작성자 닉네임
   authorAvatarUrl String // 작성자 프사 URL
   createdAt DateTime @default(now())
-  
+  likeCount Int      @default(0) 
+  retwitCount Int    @default(0)
+  commentCount Int   @default(0)
+
   likes     Like[]
   retwits   Retwit[]
   comments  Comment[]
@@ -58,6 +61,7 @@ model Comment {
   authorId  String   // 댓글 작성자 ID
   authorNickname String // 댓글 작성자 닉네임
   authorAvatarUrl String // 댓글 작성자 프사 URL
+  commentLikesCount Int @default(0) // 댓글 좋아요 수 
   content   String
   createdAt DateTime @default(now())
   parentId  String?  // 👈 부모 댓글 ID (null이면 최상위 댓글)
@@ -65,7 +69,7 @@ model Comment {
   twit      Twit     @relation(fields: [twitId], references: [id])
   parent    Comment?  @relation("CommentReplies", fields: [parentId], references: [id])
   replies   Comment[] @relation("CommentReplies")  // 대댓글들
-  likes     CommentLike[]
+  commentLikes     CommentLike[]
 }
 
 model CommentLike {

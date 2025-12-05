@@ -79,6 +79,6 @@ EXPOSE 9000
 ENV NODE_ENV=production
 ENV PORT=9000
 
-WORKDIR /app/apps/notification
+COPY --from=builder --chown=nestjs:nodejs /app/apps/notification/prisma ./prisma
 
-CMD ["node", "dist/main.js"]
+CMD ["sh", "-c", "npx prisma migrate deploy && node dist/main.js"]
