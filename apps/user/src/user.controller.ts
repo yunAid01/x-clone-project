@@ -9,6 +9,7 @@ import {
 } from '@nestjs/microservices';
 import {
   FitRpcExceptionFilter,
+  SsagaziPattern,
   RmqService,
   toRpcException,
 } from '@repo/common';
@@ -24,7 +25,10 @@ export class UserController {
     private readonly rmqService: RmqService,
   ) {}
 
-  @EventPattern('user.created')
+  @SsagaziPattern('auth.created', 'user.profile.created.creation_failed', {
+    type: 'event',
+    serviceName: 'userService',
+  })
   async createUserProfile(
     @Payload()
     data: {
@@ -34,9 +38,21 @@ export class UserController {
     },
     @Ctx() context: RmqContext,
   ) {
+    this.logger.log(`✅ 새 사용자 프로필 생성 요청: ${JSON.stringify(data)}`);
     await this.userService.createUserProfile(data);
     this.logger.log(`✅ 프로필 생성 완료! User ID: ${data.userId}`);
     this.rmqService.ack(context); // 성공 시 ACK 전송
+  }
+
+  @SsagaziPattern('updateUser', 'user.profile.update_failed')
+  async updateUser(@Payload() data: any, @Ctx() context: RmqContext) {
+    this.logger.log(`✅ 사용자 프로필 수정 요청: ${JSON.stringify(data)}`);
+    const result = await this.userService.updateUserProfile(
+      data.userId,
+      data.updateUserData,
+    );
+    this.rmqService.ack(context);
+    return result;
   }
 
   @MessagePattern('loginUserProfile')
@@ -67,17 +83,6 @@ export class UserController {
     this.logger.log(`✅ 사용자 프로필 조회 완료! User ID: ${data.userId}`);
     this.rmqService.ack(context);
     return user;
-  }
-
-  @MessagePattern('updateUser')
-  async updateUser(@Payload() data: any, @Ctx() context: RmqContext) {
-    this.logger.log(`✅ 사용자 프로필 수정 요청: ${JSON.stringify(data)}`);
-    const result = await this.userService.updateUserProfile(
-      data.userId,
-      data.updateUserData,
-    );
-    this.rmqService.ack(context);
-    return result;
   }
 
   @MessagePattern('followUser')

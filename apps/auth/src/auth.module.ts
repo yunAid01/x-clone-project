@@ -8,7 +8,6 @@ import { JwtModule } from '@nestjs/jwt';
 import { FitRpcExceptionFilter, RmqModule, RmqPublisher } from '@repo/common';
 import { AuthRepository } from './auth.repository';
 import { APP_FILTER } from '@nestjs/core';
-
 @Module({
   imports: [
     ConfigModule.forRoot({

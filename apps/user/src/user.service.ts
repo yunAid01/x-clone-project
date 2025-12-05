@@ -25,9 +25,10 @@ export class UserService implements SsagaziContainer {
 
   @Ssagazi({
     successMessage: 'user.profile.created',
-    failureMessage: 'user.profile.creation_failed',
+    failureMessage: 'auth.created.creation_failed',
     failureData: (err, args) => ({
       userId: args[0].userId,
+      email: args[0].email,
       reason: err.message,
     }),
   })
@@ -41,6 +42,45 @@ export class UserService implements SsagaziContainer {
     return newUserProfile;
   }
 
+  @Ssagazi({
+    successMessage: 'auth.created.creation_failed',
+    failureMessage: 'rollback_failed',
+    failureData: (err, args) => ({
+      data: args,
+      reason: err.message,
+    }),
+  })
+  async rollbackCreateUserProfile(data: any) {
+    this.logger.warn(
+      `Rollback createUserProfile triggered with data: ${JSON.stringify(data)}`,
+    );
+    await this.userProfileRepository.delete({ userId: data.userId });
+    this.logger.log(
+      `Rollback successful for createUserProfile with User ID: ${data.userId}`,
+    );
+  }
+
+  async updateUserProfile(userId: string, updateUserData: any) {
+    const updatedUser = await this.userProfileRepository.findOneAndUpdate(
+      { userId: userId },
+      updateUserData,
+    );
+    this.publisher.publish('user.updated', updatedUser);
+    return updatedUser;
+  }
+
+  async rollbackUpdateUserProfile(data: any) {
+    this.logger.warn(
+      `Rollback updateUserProfile triggered with data: ${JSON.stringify(data)}`,
+    );
+    const { userId, previousData } = data;
+    await this.userProfileRepository.delete({ userId: userId });
+    await this.userProfileRepository.create(previousData);
+    this.logger.log(
+      `Rollback successful for updateUserProfile with User ID: ${userId}`,
+    );
+  }
+
   async getAllUsers() {
     const userProfiles = await this.userProfileRepository.find({});
     return userProfiles;
@@ -51,15 +91,6 @@ export class UserService implements SsagaziContainer {
       userId: userId,
     });
     return userProfile;
-  }
-
-  async updateUserProfile(userId: string, updateUserData: any) {
-    const updatedUser = await this.userProfileRepository.findOneAndUpdate(
-      { userId: userId },
-      updateUserData,
-    );
-    this.publisher.publish('user.updated', updatedUser);
-    return updatedUser;
   }
 
   async followUser(userId: string, targetUserId: string) {

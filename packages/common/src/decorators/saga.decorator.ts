@@ -19,7 +19,7 @@ export interface SsagaziOptions {
   failureData?: (error: any, args: any[]) => any;
 }
 
-// 이 인터페이스를 구현하는 클래스만 @Ssagazi를 쓸 수 있음 (타입 강제)
+// 이 인터페이스를 구현하는 클 래스만 @Ssagazi를 쓸 수 있음 (타입 강제)
 export interface SsagaziContainer {
   publisher: RmqPublisher;
 }

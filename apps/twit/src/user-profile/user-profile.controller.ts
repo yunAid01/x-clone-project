@@ -1,7 +1,11 @@
 import { Controller, Logger, UseFilters } from '@nestjs/common';
 import { Ctx, EventPattern, Payload, RmqContext } from '@nestjs/microservices';
 import { UserProfileService } from './user-profile.service';
-import { FitRpcExceptionFilter, RmqService } from '@repo/common';
+import {
+  FitRpcExceptionFilter,
+  RmqService,
+  SsagaziPattern,
+} from '@repo/common';
 import { TwitService } from '../twit/twit.service';
 import { CommentService } from '../comment/comment.service';
 
@@ -17,7 +21,14 @@ export class UserProfileController {
     private readonly rmqService: RmqService,
   ) {}
 
-  @EventPattern('user.created')
+  @SsagaziPattern(
+    'user.profile.created',
+    'user.profile.created.creation_failed',
+    {
+      type: 'event',
+      serviceName: 'userProfileService',
+    },
+  )
   async duplicateUserProfile(
     @Payload() data: { userId: string; email: string; nickname: string },
     @Ctx() context: RmqContext,
